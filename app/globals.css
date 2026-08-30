@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f8fa;
+  --foreground: #111827;
+  --bg-page: #f7f8fa;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f9fafb;
+  --bg-muted: #f3f4f6;
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --accent: #16a34a;
+  --accent-hover: #15803d;
+  --accent-soft: #f0fdf4;
+  --accent-border: #bbf7d0;
+  --danger: #dc2626;
+  --danger-soft: #fee2e2;
+  --warning: #b45309;
+  --warning-soft: #fef3c7;
+  --tint-900: #065f46;
+  --tint-700: #059669;
+  --tint-500: #34d399;
+  --tint-300: #6ee7b7;
+  --tint-100: #d1fae5;
+  --tint-50: #f0fdf4;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-page: var(--bg-page);
+  --color-surface: var(--bg-surface);
+  --color-subtle: var(--bg-subtle);
+  --color-muted: var(--bg-muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-primary: var(--text-primary);
+  --color-secondary: var(--text-secondary);
+  --color-tertiary: var(--text-tertiary);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-border: var(--accent-border);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-tint-900: var(--tint-900);
+  --color-tint-700: var(--tint-700);
+  --color-tint-500: var(--tint-500);
+  --color-tint-300: var(--tint-300);
+  --color-tint-100: var(--tint-100);
+  --color-tint-50: var(--tint-50);
+  --font-sans: var(--font-inter);
+}
+
+* { box-sizing: border-box; }
+html { min-width: 320px; }
+body { background: var(--bg-page); color: var(--text-primary); font-family: var(--font-inter), Arial, Helvetica, sans-serif; }
+button, input, select, textarea { font: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
