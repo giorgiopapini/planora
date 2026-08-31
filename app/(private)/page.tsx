@@ -1,16 +1,43 @@
-import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { UserGreeting } from "@/components/UserGreeting";
-import { Avatar, Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Progress } from "@/components/ui";
+import { getUserFullName } from "@/lib/user";
+import { Card, CardContent } from "@/components/ui";
+import { WorkspaceUserMenu } from "@/components/WorkspaceSelector";
+
+const workspaces = ["Product Development", "Marketing", "Operations"];
 
 export default async function Home() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const userId = user?.id;
-  void userId;
 
-  return <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-10"><header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="mb-2 text-sm text-secondary">Workspace / Overview</p><UserGreeting /><p className="mt-2 text-sm text-secondary">Here&apos;s what&apos;s happening across your projects.</p></div><Link href="/dev"><Button variant="secondary">View component library</Button></Link></header><div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4"><Metric label="Completed" value="14" detail="+12% this month" /><Metric label="Created" value="8" detail="Across 4 projects" /><Metric label="In progress" value="11" detail="3 due this week" /><Metric label="Due soon" value="3" detail="Next 7 days" danger /></div><div className="grid gap-6 lg:grid-cols-2"><Card><CardHeader><div><CardTitle>Status overview</CardTitle><CardDescription>Current work across all projects</CardDescription></div><Badge variant="success">On track</Badge></CardHeader><CardContent><div className="flex h-4 overflow-hidden rounded-full"><div className="w-[35%] bg-tint-900" /><div className="w-[45%] bg-tint-500" /><div className="w-[20%] bg-tint-100" /></div><div className="mt-5 grid grid-cols-3 gap-3 text-xs text-secondary"><span>Completed <b className="block text-base text-primary">35%</b></span><span>In progress <b className="block text-base text-primary">45%</b></span><span>Todo <b className="block text-base text-primary">20%</b></span></div></CardContent></Card><Card><CardHeader><div><CardTitle>Team workload</CardTitle><CardDescription>Capacity used this sprint</CardDescription></div></CardHeader><CardContent className="space-y-5"><Workload name="Your workload" value={82} /><Workload name="Jordan Lee" value={64} /><Workload name="Sam Rivera" value={48} /></CardContent></Card></div><Card><CardHeader><div><CardTitle>Recent activity</CardTitle><CardDescription>Latest updates from your team</CardDescription></div><Button variant="secondary" size="sm">See all</Button></CardHeader><CardContent className="grid gap-1 sm:grid-cols-2">{["Alex Morgan", "Jordan Lee", "Sam Rivera", "Taylor Kim"].map((name, i) => <div key={name} className="flex items-center gap-3 rounded-lg p-3 hover:bg-subtle"><Avatar name={name} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{name}</p><p className="text-xs text-secondary">Updated a task {i + 1}h ago</p></div><Badge variant={i === 1 ? "neutral" : "success"}>{i === 1 ? "In progress" : "Done"}</Badge></div>)}</CardContent></Card></div>;
+  if (!user) redirect("/landing");
+
+  const name = getUserFullName(user);
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-page px-4 py-8 sm:px-6">
+      <Card className="w-full max-w-md">
+        <CardContent className="p-6 sm:p-8">
+          <div className="text-center">
+            <p className="text-3xl font-semibold tracking-tight">planora<span className="text-accent">.</span></p>
+            <WorkspaceUserMenu name={name} />
+            <h1 className="mt-8 text-2xl font-semibold tracking-tight">Welcome back!</h1>
+            <p className="mt-2 text-sm leading-6 text-secondary">Choose a workspace to continue.</p>
+          </div>
+          <div className="mt-8 space-y-3" aria-label="Your workspaces">
+            {workspaces.map((workspace) => (
+              <a
+                key={workspace}
+                href={`/overview?workspace=${encodeURIComponent(workspace)}`}
+                className="flex min-h-14 items-center justify-between rounded-lg border border-border bg-surface px-4 text-sm font-medium transition-colors duration-120 ease-out hover:border-accent-border hover:bg-accent-soft focus-visible:border-accent"
+              >
+                <span>{workspace}</span>
+                <span className="text-lg text-secondary" aria-hidden="true">→</span>
+              </a>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </main>
+  );
 }
-
-function Metric({ label, value, detail, danger = false }: { label: string; value: string; detail: string; danger?: boolean }) { return <Card><CardContent className="pt-6"><div className={`mb-5 flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold ${danger ? "bg-danger-soft text-danger" : "bg-tint-100 text-accent"}`}>{danger ? "!" : "✓"}</div><p className="text-2xl font-semibold">{value}</p><p className="mt-1 text-sm text-secondary">{label}</p><p className="mt-4 text-xs text-tertiary">{detail}</p></CardContent></Card>; }
-function Workload({ name, value }: { name: string; value: number }) { return <div><div className="mb-2 flex justify-between text-sm"><span className="font-medium">{name}</span><span className="text-secondary">{value}%</span></div><Progress value={value} label={`${name} workload`} /></div>; }

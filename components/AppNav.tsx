@@ -1,20 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 const items = [
-  { href: "/", label: "Overview" },
+  { href: "/overview", label: "Overview" },
   { href: "/projects", label: "Projects" },
   { href: "/team", label: "Team" },
+  { href: "/workspaces", label: "Workspaces" },
 ];
 
 export function AppNav() {
   const pathname = usePathname();
+  const workspaceQuery = new URLSearchParams(useSearchParams().toString());
+  const workspace = workspaceQuery.get("workspace");
+  const query = workspace ? `?workspace=${encodeURIComponent(workspace)}` : "";
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -28,7 +32,7 @@ export function AppNav() {
   }, [isLoggingOut, router]);
 
   useEffect(() => {
-    items.forEach((item) => router.prefetch(item.href));
+    items.forEach((item) => router.prefetch(`${item.href}${query}`));
   }, [router]);
 
   useEffect(() => {
@@ -41,17 +45,17 @@ export function AppNav() {
     return () => document.removeEventListener("pointerdown", closeProfileMenu);
   }, []);
 
-  const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
+  const isActive = (href: string) => pathname.startsWith(href);
 
   return (
     <nav className="border-b border-border bg-surface" aria-label="Primary navigation">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:h-16 sm:px-6 lg:px-10">
         <div className="flex items-center gap-8">
-          <Link href="/" className="text-xl font-semibold tracking-tight transition-colors duration-120 ease-out hover:text-accent sm:text-2xl" aria-label="Planora overview">
+          <Link href={`/workspaces`} className="text-xl font-semibold tracking-tight transition-colors duration-120 ease-out hover:text-accent sm:text-2xl" aria-label="Planora overview">
             planora<span className="text-accent">.</span>
           </Link>
           <div className="hidden items-center gap-6 md:flex">
-            {items.map((item) => <NavLink key={item.href} item={item} active={isActive(item.href)} />)}
+            {items.map((item) => <NavLink key={item.href} item={item} active={isActive(item.href)} query={query} />)}
           </div>
         </div>
         <div className="relative" ref={profileMenuRef}>
@@ -65,11 +69,11 @@ export function AppNav() {
           </button>
         </div>
       </div>
-      {menuOpen && <div className="border-t border-border px-4 py-2 md:hidden">{items.map((item) => <NavLink key={item.href} item={item} active={isActive(item.href)} onClick={() => setMenuOpen(false)} mobile />)}</div>}
+      {menuOpen && <div className="border-t border-border px-4 py-2 md:hidden">{items.map((item) => <NavLink key={item.href} item={item} active={isActive(item.href)} onClick={() => setMenuOpen(false)} mobile query={query} />)}</div>}
     </nav>
   );
 }
 
-function NavLink({ item, active, onClick, mobile = false }: { item: { href: string; label: string }; active: boolean; onClick?: () => void; mobile?: boolean }) {
-  return <Link href={item.href} onClick={onClick} aria-current={active ? "page" : undefined} className={`${mobile ? "block border-b border-border py-3 last:border-b-0" : "border-b-2 py-5"} text-sm font-medium transition-colors duration-120 ease-out ${active ? "border-accent text-primary" : "border-transparent text-secondary hover:text-primary"}`}>{item.label}</Link>;
+function NavLink({ item, active, onClick, mobile = false, query = "" }: { item: { href: string; label: string }; active: boolean; onClick?: () => void; mobile?: boolean; query?: string }) {
+  return <Link href={`${item.href}${query}`} onClick={onClick} aria-current={active ? "page" : undefined} className={`${mobile ? "block border-b border-border py-3 last:border-b-0" : "border-b-2 py-5"} text-sm font-medium transition-colors duration-120 ease-out ${active ? "border-accent text-primary" : "border-transparent text-secondary hover:text-primary"}`}>{item.label}</Link>;
 }
