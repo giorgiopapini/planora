@@ -24,6 +24,10 @@
 .DS_Store
 *.pem
 
+# database schema and generated SQL
+DB_SCHEMA.md
+SQL.txt
+
 # debug
 npm-debug.log*
 yarn-debug.log*

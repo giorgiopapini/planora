@@ -71,7 +71,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               setSuccessMessage("Account created. Check your email to confirm your address.");
               return;
             }
-            router.push("/");
+            router.push("/workspaces");
             router.refresh();
           }}>
             {isSignUp && <Input id="full-name" name="fullName" label="Full name" placeholder="Alex Morgan" autoComplete="name" required />}

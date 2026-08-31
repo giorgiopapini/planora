@@ -6,4 +6,8 @@ export * from "./Input";
 export * from "./Modal";
 export * from "./MultiSelect";
 export * from "./Progress";
+export * from "./ProjectHealth";
+export * from "./ProjectTimeline";
+export * from "./ProjectTeam";
+export * from "./ActivityList";
 export * from "./Separator";

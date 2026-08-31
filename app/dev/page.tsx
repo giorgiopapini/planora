@@ -1,6 +1,8 @@
 "use client";
 
 import { Kanban } from "@/components/Kanban";
+import { ProjectWorkspace } from "@/components/ProjectWorkspace";
+import { projects } from "@/lib/projects";
 import { useState } from "react";
 import { Avatar, AvatarGroup, Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, MultiSelect, Progress, Select, Separator } from "@/components/ui";
 
@@ -23,6 +25,8 @@ export default function DevPage() {
 <section className="space-y-4"><SectionTitle title="Dashboard card patterns" /><div className="grid gap-6 md:grid-cols-3"><StatCard label="Completed" value="14" detail="+12% this month" /><StatCard label="Created" value="8" detail="Across 4 projects" /><StatCard label="Due soon" value="3" detail="Next 7 days" danger /></div></section>
 
 <section className="space-y-4"><SectionTitle title="Kanban board" /><Kanban /></section>
+
+<section className="space-y-4"><SectionTitle title="Project details and editing" /><ProjectWorkspace project={projects[0]} selectedWorkspace={projects[0].workspace} /></section>
 
 <section className="space-y-4"><SectionTitle title="Data visualization patterns" /><Card><CardHeader><div><CardTitle>Status overview</CardTitle><CardDescription>Current work across all projects</CardDescription></div><Badge variant="success">Updated just now</Badge></CardHeader><CardContent><div className="flex h-4 overflow-hidden rounded-full" aria-label="Status overview: 35% completed, 45% in progress, 20% todo"><div className="w-[35%] bg-tint-900" /><div className="w-[45%] bg-tint-500" /><div className="w-[20%] bg-tint-100" /></div><div className="mt-4 flex flex-wrap gap-4 text-xs text-secondary"><span><i className="mr-2 inline-block h-2 w-2 rounded-full bg-tint-900" />Completed 35%</span><span><i className="mr-2 inline-block h-2 w-2 rounded-full bg-tint-500" />In progress 45%</span><span><i className="mr-2 inline-block h-2 w-2 rounded-full bg-tint-100" />Todo 20%</span></div></CardContent></Card></section>
 
