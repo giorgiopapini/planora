@@ -101,6 +101,18 @@ export async function updateProject(input: { projectId: string; name: string; de
   revalidatePath(`/projects/${input.projectId}`);
 }
 
+export async function deleteProject(input: { projectId: string; projectName: string }) {
+  const { supabase } = await authenticatedClient();
+  const projectName = text(input.projectName, "Project name");
+  const { data: project, error: projectError } = await supabase.from("projects").select("id, name").eq("id", input.projectId).maybeSingle();
+  if (projectError || !project) throw new Error(projectError?.message || "Project not found");
+  if (project.name !== projectName) throw new Error("Project name confirmation does not match");
+  const { error } = await supabase.rpc("delete_project", { p_project_id: input.projectId, p_project_name: projectName });
+  if (error) throw new Error(error.message);
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${input.projectId}`);
+}
+
 export async function createTask(input: { projectId: string; title: string; description: string; dueDate: string | null; priority: string; assigneeId?: string }) {
   const { supabase, user } = await authenticatedClient();
   const title = text(input.title, "Task name");
