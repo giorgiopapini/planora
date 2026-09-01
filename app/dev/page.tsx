@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Avatar, AvatarGroup, Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, MultiSelect, Progress, Select, Separator } from "@/components/ui";
 
 const people = [{ name: "Alex Morgan" }, { name: "Jordan Lee" }, { name: "Sam Rivera" }, { name: "Taylor Kim" }, { name: "Maya Patel" }];
-const previewProject = { id: "preview", workspaceId: "preview", slug: "preview", name: "Preview project", status: "In progress" as const, progress: 72, detail: "Preview data", description: "A component-library preview using local data only.", ownerId: "preview-owner", owner: "Alex Morgan", startDate: "Mar 1, 2026", dueDate: "Mar 30, 2026", workspace: "Preview workspace", tasks: { completed: 3, total: 5 }, taskList: [], milestones: [], team: [{ userId: "preview-owner", name: "Alex Morgan", role: "Project owner" }], activity: [], workflowStatuses: [] };
+const previewProject = { id: "preview", workspaceId: "preview", slug: "preview", name: "Preview project", status: "In progress" as const, progress: 72, detail: "Preview data", description: "A component-library preview using local data only.", ownerId: "preview-owner", owner: "Alex Morgan", startDate: "01/03/2026", startDateIso: "2026-03-01", dueDate: "30/03/2026", dueDateIso: "2026-03-30", workspace: "Preview workspace", tasks: { completed: 3, total: 5 }, taskList: [], milestones: [], team: [{ userId: "preview-owner", name: "Alex Morgan", role: "Project owner" }], activity: [], workflowStatuses: [] };
 
 export default function DevPage() {
   const [selectedPeople, setSelectedPeople] = useState([people[0].name]);

@@ -15,6 +15,7 @@ const priorities: TaskPriority[] = ["Low", "Medium", "High", "Urgent"];
 const projectStatuses: ProjectStatus[] = ["Planning", "In progress", "On track", "Archived"];
 const blankTask: NewTaskForm = { title: "", detail: "", dueDate: "", priority: "Medium", assigneeId: "" };
 const inputClass = "h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-primary outline-none placeholder:text-tertiary focus:border-accent focus:ring-2 focus:ring-accent/20";
+const noDueDate = "No due date";
 
 export function ProjectWorkspace({ project: initialProject, selectedWorkspace, workspaceMembers = initialProject.team.map((member) => ({ userId: member.userId, name: member.name })) }: ProjectWorkspaceProps) {
   const [project, setProject] = useState(initialProject);
@@ -41,7 +42,7 @@ export function ProjectWorkspace({ project: initialProject, selectedWorkspace, w
     try {
       await updateProject({ projectId: project.id, ...changes });
       const owner = workspaceMembers.find((member) => member.userId === changes.ownerId);
-      setProject((current) => ({ ...current, name: changes.name, description: changes.description, status: changes.status, ownerId: changes.ownerId, owner: owner?.name || current.owner, startDate: formatInputDate(changes.startDate), dueDate: formatInputDate(changes.dueDate), team: changes.memberIds.map((userId) => { const member = workspaceMembers.find((item) => item.userId === userId); return member ? { ...member, role: userId === changes.ownerId ? "Project owner" : "Project team" } : { userId, name: "User", role: "Project team" }; }) }));
+      setProject((current) => ({ ...current, name: changes.name, description: changes.description, status: changes.status, ownerId: changes.ownerId, owner: owner?.name || current.owner, startDate: formatInputDate(changes.startDate), startDateIso: changes.startDate, dueDate: formatInputDate(changes.dueDate), dueDateIso: changes.dueDate, team: changes.memberIds.map((userId) => { const member = workspaceMembers.find((item) => item.userId === userId); return member ? { ...member, role: userId === changes.ownerId ? "Project owner" : "Project team" } : { userId, name: "User", role: "Project team" }; }) }));
       setIsEditingProject(false);
       setError("");
     } catch (actionError) { setError(actionError instanceof Error ? actionError.message : "Project could not be updated."); }
@@ -71,9 +72,9 @@ export function ProjectWorkspace({ project: initialProject, selectedWorkspace, w
     const task = project.taskList.find((item) => item.id === taskId);
     if (!task) return;
     try {
-      await updateTaskAction({ taskId, title: changes.title, description: changes.detail, dueDate: changes.dueDate && changes.dueDate !== "No due date" ? toInputDate(changes.dueDate) : undefined, priority: changes.priority, statusName: changes.status, assigneeIds: changes.assigneeIds });
+      await updateTaskAction({ taskId, title: changes.title, description: changes.detail, dueDate: changes.dueDate === undefined ? undefined : changes.dueDate === "No due date" ? null : toInputDate(changes.dueDate), priority: changes.priority, statusName: changes.status, assigneeIds: changes.assigneeIds });
       setProject((current) => {
-        const taskList = current.taskList.map((item) => item.id === taskId ? { ...item, ...changes } : item);
+        const taskList = current.taskList.map((item) => item.id === taskId ? { ...item, ...changes, ...(changes.dueDate !== undefined ? { dueDate: changes.dueDate === noDueDate ? noDueDate : formatInputDate(toInputDate(changes.dueDate)), dueDateIso: changes.dueDate === noDueDate ? null : toInputDate(changes.dueDate) } : {}) } : item);
         const completed = taskList.filter((item) => item.status.toLowerCase() === "completed").length;
         return {
           ...current,
@@ -88,13 +89,13 @@ export function ProjectWorkspace({ project: initialProject, selectedWorkspace, w
 
   function openTaskEditor(task: ProjectTask) {
     setEditingTask(task);
-    setTaskForm({ title: task.title, detail: task.detail === "No description provided." ? "" : task.detail, dueDate: task.dueDate === "No due date" ? "" : toInputDate(task.dueDate), priority: task.priority, assigneeId: task.assigneeIds[0] || "" });
+    setTaskForm({ title: task.title, detail: task.detail === "No description provided." ? "" : task.detail, dueDate: task.dueDateIso || "", priority: task.priority, assigneeId: task.assigneeIds[0] || "" });
   }
 
   async function saveTask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editingTask || !taskForm.title.trim()) return;
-    await changeTask(editingTask.id, { title: taskForm.title, detail: taskForm.detail, dueDate: taskForm.dueDate ? formatInputDate(taskForm.dueDate) : "No due date", priority: taskForm.priority, assigneeIds: taskForm.assigneeId ? [taskForm.assigneeId] : [] });
+    await changeTask(editingTask.id, { title: taskForm.title, detail: taskForm.detail, dueDate: taskForm.dueDate || noDueDate, priority: taskForm.priority, assigneeIds: taskForm.assigneeId ? [taskForm.assigneeId] : [] });
     setEditingTask(null);
   }
 
@@ -117,7 +118,7 @@ export function ProjectWorkspace({ project: initialProject, selectedWorkspace, w
       const taskId = await createTask({ projectId: project.id, title: taskForm.title, description: taskForm.detail, dueDate: taskForm.dueDate || null, priority: taskForm.priority, assigneeId: taskForm.assigneeId || undefined });
       const todoStatus = project.workflowStatuses.find((status) => status.name.toLowerCase() === "todo");
       const assignee = workspaceMembers.find((member) => member.userId === taskForm.assigneeId);
-      setProject((current) => ({ ...current, taskList: [{ id: taskId, title: taskForm.title.trim(), detail: taskForm.detail.trim() || "No description provided.", status: todoStatus?.name || "Todo", statusId: todoStatus?.id || "", dueDate: taskForm.dueDate ? formatInputDate(taskForm.dueDate) : "No due date", assignees: assignee ? [assignee.name] : [], assigneeIds: assignee ? [assignee.userId] : [], priority: taskForm.priority, tags: [], tagIds: [] }, ...current.taskList,], tasks: { ...current.tasks, total: current.tasks.total + 1 } }));
+      setProject((current) => ({ ...current, taskList: [{ id: taskId, title: taskForm.title.trim(), detail: taskForm.detail.trim() || "No description provided.", status: todoStatus?.name || "Todo", statusId: todoStatus?.id || "", dueDate: taskForm.dueDate ? formatInputDate(taskForm.dueDate) : noDueDate, dueDateIso: taskForm.dueDate || null, assignees: assignee ? [assignee.name] : [], assigneeIds: assignee ? [assignee.userId] : [], priority: taskForm.priority, tags: [], tagIds: [] }, ...current.taskList,], tasks: { ...current.tasks, total: current.tasks.total + 1 } }));
       setTaskForm(blankTask);
       setIsAddingTask(false);
       setError("");
@@ -137,7 +138,7 @@ export function ProjectWorkspace({ project: initialProject, selectedWorkspace, w
 }
 
 function ProjectEditForm({ project, onSave, onCancel, onDelete, workspaceMembers }: { project: Project; onSave: (changes: { name: string; description: string; status: ProjectStatus; ownerId: string; startDate: string; dueDate: string; memberIds: string[] }) => Promise<void>; onCancel: () => void; onDelete: () => void; workspaceMembers: { userId: string; name: string }[] }) {
-  const [form, setForm] = useState({ name: project.name, description: project.description, status: project.status, ownerId: project.ownerId, startDate: toInputDate(project.startDate), dueDate: toInputDate(project.dueDate), memberIds: project.team.map((member) => member.userId) });
+  const [form, setForm] = useState({ name: project.name, description: project.description, status: project.status, ownerId: project.ownerId, startDate: project.startDateIso, dueDate: project.dueDateIso, memberIds: project.team.map((member) => member.userId) });
   const selectedTeam = form.memberIds.map((userId) => ({ name: workspaceMembers.find((member) => member.userId === userId)?.name || "User" }));
   const memberOptions = workspaceMembers.map((member) => ({ value: member.userId, label: member.name }));
   return <form className="space-y-5" onSubmit={(event) => { event.preventDefault(); if (!form.name.trim() || !form.memberIds.length) return; void onSave({ ...form, name: form.name.trim(), description: form.description.trim(), ownerId: form.memberIds.includes(form.ownerId) ? form.ownerId : form.memberIds[0] }); }}><Input id="edit-project-name" label="Project name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required /><div className="space-y-1.5"><label htmlFor="edit-project-description" className="block text-sm font-medium text-primary">Description</label><textarea id="edit-project-description" rows={4} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} className="w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-sm text-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" required /></div><MultiSelect id="edit-project-team" label="Project team" options={memberOptions} value={form.memberIds} onChange={(memberIds) => setForm({ ...form, memberIds, ownerId: memberIds.includes(form.ownerId) ? form.ownerId : memberIds[0] || "" })} placeholder="Choose team members" />{selectedTeam.length > 0 && <div className="flex items-center gap-3 rounded-lg border border-border bg-subtle px-3 py-2"><AvatarGroup people={selectedTeam} /><p className="text-xs text-secondary">{selectedTeam.length} team member{selectedTeam.length === 1 ? "" : "s"} selected</p></div>}<div className="grid gap-5 sm:grid-cols-2"><Select id="edit-project-status" label="Status" value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as ProjectStatus })}>{projectStatuses.map((status) => <option key={status}>{status}</option>)}</Select><Select id="edit-project-owner" label="Owner" value={form.ownerId} onChange={(event) => setForm({ ...form, ownerId: event.target.value })} disabled={!form.memberIds.length}><option value="">Select an owner</option>{workspaceMembers.filter((member) => form.memberIds.includes(member.userId)).map((member) => <option key={member.userId} value={member.userId}>{member.name}</option>)}</Select></div><div className="grid gap-5 sm:grid-cols-2"><Input id="edit-project-start-date" label="Start date" type="date" value={form.startDate} onChange={(event) => setForm({ ...form, startDate: event.target.value })} required /><Input id="edit-project-due-date" label="Target date" type="date" value={form.dueDate} onChange={(event) => setForm({ ...form, dueDate: event.target.value })} required /></div><div className="border-t border-border pt-5"><button type="button" onClick={onDelete} className="cursor-pointer text-sm font-medium text-danger underline underline-offset-4 hover:text-red-700">Delete project</button><div className="mt-5 flex justify-end gap-3"><Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button><Button type="submit" disabled={!form.memberIds.length}>Save changes</Button></div></div></form>;
@@ -145,9 +146,18 @@ function ProjectEditForm({ project, onSave, onCancel, onDelete, workspaceMembers
 
 function TaskRow({ task, statuses, onStatusChange, onEdit, onDelete }: { task: ProjectTask; statuses: string[]; onStatusChange: (status: string) => void; onEdit: () => void; onDelete: () => void }) {
   const priorityVariant = task.priority === "Urgent" ? "danger" : task.priority === "High" ? "warning" : "neutral";
-  return <article className="flex flex-col gap-4 rounded-lg px-3 py-4 transition-colors duration-120 hover:bg-subtle sm:flex-row sm:items-center"><div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm ${task.status.toLowerCase() === "completed" ? "border-accent bg-accent text-white" : "border-border-strong bg-surface text-transparent"}`} aria-hidden="true">✓</div><div className="min-w-0 flex-1"><p className={`text-sm font-medium ${task.status.toLowerCase() === "completed" ? "text-secondary line-through" : "text-primary"}`}>{task.title}</p><p className="mt-1 line-clamp-2 text-xs leading-5 text-secondary">{task.detail}</p><div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-tertiary"><span>{task.dueDate}</span><span aria-hidden="true">·</span><span>{task.assignees.length ? task.assignees.join(", ") : "Unassigned"}</span>{task.tags.length > 0 && <><span aria-hidden="true">·</span><span>{task.tags.join(", ")}</span></>}</div></div><div className="flex items-center gap-2 sm:shrink-0"><Badge variant={priorityVariant}>{task.priority}</Badge><label className="sr-only" htmlFor={`project-task-status-${task.id}`}>Status for {task.title}</label><select id={`project-task-status-${task.id}`} value={task.status} onChange={(event) => onStatusChange(event.target.value)} className="h-8 rounded-md border border-border bg-surface px-2 text-xs text-secondary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20">{statuses.map((status) => <option key={status}>{status}</option>)}</select>{task.assignees[0] && <Avatar name={task.assignees[0]} size="sm" />}<IconButton icon="edit" onClick={onEdit} aria-label={`Edit ${task.title}`} /><IconButton icon="delete" onClick={onDelete} aria-label={`Delete ${task.title}`} /></div></article>;
+  const formattedDueDate = formatTaskDate(task.dueDateIso);
+  return <article className="flex flex-col gap-4 rounded-lg px-3 py-4 transition-colors duration-120 hover:bg-subtle sm:flex-row sm:items-center"><div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm ${task.status.toLowerCase() === "completed" ? "border-accent bg-accent text-white" : "border-border-strong bg-surface text-transparent"}`} aria-hidden="true">✓</div><div className="min-w-0 flex-1"><p className={`text-sm font-medium ${task.status.toLowerCase() === "completed" ? "text-secondary line-through" : "text-primary"}`}>{task.title}</p><p className="mt-1 line-clamp-2 text-xs leading-5 text-secondary">{task.detail}</p><div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-tertiary"><span>{formattedDueDate}</span><span aria-hidden="true">·</span><span>{task.assignees.length ? task.assignees.join(", ") : "Unassigned"}</span>{task.tags.length > 0 && <><span aria-hidden="true">·</span><span>{task.tags.join(", ")}</span></>}</div></div><div className="flex items-center gap-2 sm:shrink-0"><Badge variant={priorityVariant}>{task.priority}</Badge><label className="sr-only" htmlFor={`project-task-status-${task.id}`}>Status for {task.title}</label><select id={`project-task-status-${task.id}`} value={task.status} onChange={(event) => onStatusChange(event.target.value)} className="h-8 rounded-md border border-border bg-surface px-2 text-xs text-secondary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20">{statuses.map((status) => <option key={status}>{status}</option>)}</select>{task.assignees[0] && <Avatar name={task.assignees[0]} size="sm" />}<IconButton icon="edit" onClick={onEdit} aria-label={`Edit ${task.title}`} /><IconButton icon="delete" onClick={onDelete} aria-label={`Delete ${task.title}`} /></div></article>;
+}
+
+function formatTaskDate(rawDate: string | null) {
+  if (!rawDate) return noDueDate;
+  const match = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return noDueDate;
+  const [, year, month, day] = match;
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${year}-${month}-${day}T00:00:00Z`));
 }
 
 function InfoItem({ label, value }: { label: string; value: string }) { return <div><p className="text-xs font-semibold uppercase tracking-[0.08em] text-tertiary">{label}</p><p className="mt-2 text-sm font-medium text-primary">{value}</p></div>; }
-function toInputDate(date: string) { const parsed = new Date(date); if (Number.isNaN(parsed.getTime())) return ""; return `${parsed.getUTCFullYear()}-${String(parsed.getUTCMonth() + 1).padStart(2, "0")}-${String(parsed.getUTCDate()).padStart(2, "0")}`; }
-function formatInputDate(date: string) { if (!date) return "No date"; return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${date}T00:00:00Z`)); }
+function toInputDate(date: string) { const match = date.match(/^(\d{4})-(\d{2})-(\d{2})$/); if (match) return date; const parsed = new Date(date); if (Number.isNaN(parsed.getTime())) return ""; return `${parsed.getUTCFullYear()}-${String(parsed.getUTCMonth() + 1).padStart(2, "0")}-${String(parsed.getUTCDate()).padStart(2, "0")}`; }
+function formatInputDate(date: string) { if (!date) return noDueDate; const match = date.match(/^(\d{4})-(\d{2})-(\d{2})$/); if (!match) return noDueDate; const [, year, month, day] = match; return `${day}/${month}/${year}`; }

@@ -15,6 +15,7 @@ export type ProjectTask = {
   status: TaskStatus;
   statusId: string;
   dueDate: string;
+  dueDateIso: string | null;
   assignees: string[];
   assigneeIds: string[];
   priority: TaskPriority;
@@ -35,7 +36,9 @@ export type Project = {
   ownerId: string;
   owner: string;
   startDate: string;
+  startDateIso: string;
   dueDate: string;
+  dueDateIso: string;
   workspace: string;
   tasks: { completed: number; total: number };
   taskList: ProjectTask[];
