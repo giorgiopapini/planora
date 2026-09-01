@@ -6,6 +6,7 @@ export * from "./Input";
 export * from "./Textarea";
 export * from "./DateInput";
 export * from "./IconButton";
+export * from "./ActionIconButton";
 export * from "./Modal";
 export * from "./MultiSelect";
 export * from "./Progress";
