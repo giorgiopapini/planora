@@ -3,6 +3,7 @@ export * from "./Badge";
 export * from "./Button";
 export * from "./Card";
 export * from "./Input";
+export * from "./IconButton";
 export * from "./Modal";
 export * from "./MultiSelect";
 export * from "./Progress";

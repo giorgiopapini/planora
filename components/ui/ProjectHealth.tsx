@@ -2,7 +2,7 @@ import { Badge } from "./Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "./Card";
 
 type ProjectHealthProps = {
-  status: "In progress" | "On track" | "Planning";
+  status: "In progress" | "On track" | "Planning" | "Archived";
   progress: number;
   completedTasks: number;
   totalTasks: number;
@@ -10,7 +10,7 @@ type ProjectHealthProps = {
 };
 
 export function ProjectHealth({ status, progress, completedTasks, totalTasks, dueDate }: ProjectHealthProps) {
-  const statusVariant = status === "Planning" ? "neutral" : "success";
+  const statusVariant = status === "Planning" ? "neutral" : status === "Archived" ? "danger" : "success";
   return (
     <Card>
       <CardHeader>
