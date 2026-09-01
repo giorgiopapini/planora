@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createProject } from "@/app/actions";
-import { AvatarGroup, Button, Input, Modal, MultiSelect, Select } from "@/components/ui";
+import { AvatarGroup, Button, DateInput, Input, Modal, MultiSelect, Select, Textarea } from "@/components/ui";
 
 type Member = { id: string; name: string };
 
@@ -40,8 +40,8 @@ export function ProjectForm({ workspaceId, members }: { workspaceId: string; mem
     <Modal open={open} title="Create a new project" description="Set up the project and choose the people who will help move it forward." onClose={closeForm}>
       <form className="space-y-5" onSubmit={submit}>
         <Input id="project-name" name="projectName" label="Project name" placeholder="e.g. Website refresh" required />
-        <div className="space-y-1.5"><label htmlFor="project-description" className="block text-sm font-medium text-primary">Project description</label><textarea id="project-description" name="projectDescription" rows={3} placeholder="What is this project about?" className="w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-tertiary focus:border-accent focus:ring-2 focus:ring-accent/20" required /></div>
-        <div className="grid gap-5 sm:grid-cols-2"><Input id="project-start-date" name="startDate" label="Start date" type="date" required /><Input id="project-due-date" name="dueDate" label="Target date" type="date" required /></div>
+        <Textarea id="project-description" name="projectDescription" label="Project description" rows={3} placeholder="What is this project about?" required />
+        <div className="grid gap-5 sm:grid-cols-2"><DateInput id="project-start-date" name="startDate" label="Start date" required /><DateInput id="project-due-date" name="dueDate" label="Target date" required /></div>
         <MultiSelect id="project-team" label="Project team" options={memberOptions} value={selectedMembers} onChange={setSelectedMembers} placeholder="Choose team members" helperText="Select everyone who should be assigned to this project." />
         <Select id="project-owner" label="Project owner" value={ownerId} onChange={(event) => setOwnerId(event.target.value)} required><option value="">Select an owner</option>{members.filter((member) => selectedMembers.includes(member.id) || !selectedMembers.length).map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}</Select>
         {selectedMembers.length > 0 && <div className="flex items-center gap-3 rounded-lg border border-border bg-subtle px-3 py-2"><AvatarGroup people={selectedMembers.map((id) => ({ name: members.find((member) => member.id === id)?.name || "User" }))} /><p className="text-xs text-secondary">{selectedMembers.length} team member{selectedMembers.length === 1 ? "" : "s"} selected</p></div>}
