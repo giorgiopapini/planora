@@ -33,7 +33,7 @@ export function AppNav() {
 
   useEffect(() => {
     items.forEach((item) => router.prefetch(`${item.href}${query}`));
-  }, [router]);
+  }, [query, router]);
 
   useEffect(() => {
     const closeProfileMenu = (event: PointerEvent) => {
