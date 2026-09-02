@@ -81,7 +81,7 @@ export function GanttChart({ tasks, startDate, endDate, onTaskClick, renderTaskL
                   {task.status && <span className="mt-0.5 block truncate text-xs text-secondary">{task.status}</span>}
                 </button>
                 <div className="relative">
-                  {visible && <TaskBar task={task} left={left} width={barWidth} />}
+                  {visible && <TaskBar task={task} left={left} width={barWidth} onClick={onTaskClick ? () => onTaskClick(task) : undefined} />}
                 </div>
               </div>;
             })}
@@ -99,12 +99,12 @@ export function GanttChart({ tasks, startDate, endDate, onTaskClick, renderTaskL
   );
 }
 
-function TaskBar({ task, left, width }: { task: GanttTask; left: number; width: number }) {
+function TaskBar({ task, left, width, onClick }: { task: GanttTask; left: number; width: number; onClick?: () => void }) {
   const progress = Math.min(100, Math.max(0, task.progress ?? 0));
   const colors = task.color === "dark" ? "bg-tint-900" : task.color === "light" ? "bg-tint-100 text-tint-900 ring-1 ring-inset ring-accent-border" : "bg-accent";
   const style = { left, width } as CSSProperties;
-  if (task.milestone) return <div className="absolute top-1/2 z-20 h-4 w-4 -translate-y-1/2 rotate-45 rounded-[3px] bg-accent ring-4 ring-accent-soft" style={style} title={`${task.name}, milestone`} aria-label={`${task.name}, milestone`} />;
-  return <div className={`absolute top-1/2 z-10 h-7 -translate-y-1/2 overflow-hidden rounded-md text-xs font-medium text-white ${colors}`} style={style} title={`${task.name}${task.progress === undefined ? "" : `, ${progress}% complete`}`} role="img" aria-label={`${task.name}${task.progress === undefined ? "" : `, ${progress}% complete`}`}><div className="absolute inset-y-0 left-0 bg-black/10" style={{ width: `${progress}%` }} /><span className="relative block truncate px-2 py-1">{task.name}</span></div>;
+  if (task.milestone) return <button type="button" onClick={onClick} disabled={!onClick} className="absolute top-1/2 z-20 h-4 w-4 -translate-y-1/2 rotate-45 rounded-[3px] bg-accent ring-4 ring-accent-soft disabled:cursor-default" style={style} title={`${task.name}, milestone`} aria-label={`${task.name}, milestone`} />;
+  return <button type="button" onClick={onClick} disabled={!onClick} className={`absolute top-1/2 z-10 h-7 -translate-y-1/2 overflow-hidden rounded-md text-left text-xs font-medium text-white ${colors} ${onClick ? "cursor-pointer hover:brightness-95" : "cursor-default"}`} style={style} title={`${task.name}${task.progress === undefined ? "" : `, ${progress}% complete`}`} aria-label={`${task.name}${task.progress === undefined ? "" : `, ${progress}% complete`}`}><div className="absolute inset-y-0 left-0 bg-black/10" style={{ width: `${progress}%` }} /><span className="relative block truncate px-2 py-1">{task.name}</span></button>;
 }
 
 function toDate(value: Date | string) { const date = value instanceof Date ? new Date(value) : new Date(`${value}T00:00:00`); return startOfDay(date); }

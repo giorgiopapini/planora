@@ -113,13 +113,13 @@ export async function deleteProject(input: { projectId: string; projectName: str
   revalidatePath(`/projects/${input.projectId}`);
 }
 
-export async function createTask(input: { projectId: string; title: string; description: string; dueDate: string | null; priority: string; assigneeId?: string }) {
+export async function createTask(input: { projectId: string; title: string; description: string; startDate: string; dueDate: string | null; priority: string; assigneeId?: string }) {
   const { supabase, user } = await authenticatedClient();
   const title = text(input.title, "Task name");
   const description = input.description.trim();
   const { data: status, error: statusError } = await supabase.from("workflow_statuses").select("id").eq("key", "todo").eq("workspace_id", (await supabase.from("projects").select("workspace_id").eq("id", input.projectId).single()).data?.workspace_id ?? "").maybeSingle();
   if (statusError || !status) throw new Error(statusError?.message || "Todo status is not configured for this workspace");
-  const { data: task, error } = await supabase.from("tasks").insert({ project_id: input.projectId, status_id: status.id, title, description, due_date: input.dueDate || null, priority: databaseStatus(input.priority), created_by: user.id, position: Date.now() / 1000 }).select("id").single();
+  const { data: task, error } = await supabase.from("tasks").insert({ project_id: input.projectId, status_id: status.id, title, description, start_date: input.startDate, due_date: input.dueDate || null, priority: databaseStatus(input.priority), created_by: user.id, position: Date.now() / 1000 }).select("id").single();
   if (error || !task) throw new Error(error?.message || "Task could not be created");
   if (input.assigneeId) {
     const { error: assigneeError } = await supabase.from("task_assignees").insert({ task_id: task.id, user_id: input.assigneeId, assigned_by: user.id });
@@ -129,13 +129,14 @@ export async function createTask(input: { projectId: string; title: string; desc
   return task.id;
 }
 
-export async function updateTask(input: { taskId: string; title?: string; description?: string; dueDate?: string | null; priority?: string; statusName?: string; assigneeIds?: string[] }) {
+export async function updateTask(input: { taskId: string; title?: string; description?: string; startDate?: string; dueDate?: string | null; priority?: string; statusName?: string; assigneeIds?: string[] }) {
   const { supabase, user } = await authenticatedClient();
   const { data: task, error: taskError } = await supabase.from("tasks").select("id, project_id, project:projects(workspace_id)").eq("id", input.taskId).maybeSingle();
   if (taskError || !task) throw new Error(taskError?.message || "Task not found");
   const changes: Record<string, unknown> = {};
   if (input.title !== undefined) changes.title = text(input.title, "Task name");
   if (input.description !== undefined) changes.description = input.description.trim();
+  if (input.startDate !== undefined) changes.start_date = input.startDate;
   if (input.dueDate !== undefined) changes.due_date = input.dueDate || null;
   if (input.priority !== undefined) changes.priority = databaseStatus(input.priority);
   if (input.statusName !== undefined) {
@@ -163,8 +164,9 @@ export async function deleteTask(taskId: string) {
   const { supabase } = await authenticatedClient();
   const { data: task, error: taskError } = await supabase.from("tasks").select("project_id").eq("id", taskId).maybeSingle();
   if (taskError || !task) throw new Error(taskError?.message || "Task not found");
-  const { error } = await supabase.from("tasks").delete().eq("id", taskId);
+  const { data: deletedTask, error } = await supabase.from("tasks").delete().eq("id", taskId).select("id").maybeSingle();
   if (error) throw new Error(error.message);
+  if (!deletedTask) throw new Error("Task could not be deleted. Check the task deletion policy in Supabase.");
   revalidatePath(`/projects/${task.project_id}`);
 }
 

@@ -14,6 +14,8 @@ export type ProjectTask = {
   title: string;
   status: TaskStatus;
   statusId: string;
+  startDate: string;
+  startDateIso: string;
   dueDate: string;
   dueDateIso: string | null;
   assignees: string[];
