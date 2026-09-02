@@ -12,6 +12,8 @@ export * from "./MultiSelect";
 export * from "./Progress";
 export * from "./ProjectHealth";
 export * from "./ProjectTimeline";
+export * from "./GanttChart";
+export * from "./Calendar";
 export * from "./ProjectTeam";
 export * from "./ActivityList";
 export * from "./Separator";

@@ -3,10 +3,23 @@
 import { Kanban } from "@/components/Kanban";
 import { ProjectWorkspace } from "@/components/ProjectWorkspace";
 import { useState } from "react";
-import { Avatar, AvatarGroup, Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DateInput, DeleteIconButton, EditIconButton, Input, MultiSelect, Progress, Select, Separator, Textarea } from "@/components/ui";
+import { Avatar, AvatarGroup, Badge, Button, Calendar, Card, CardContent, CardDescription, CardHeader, CardTitle, DateInput, DeleteIconButton, EditIconButton, GanttChart, Input, MultiSelect, Progress, Select, Separator, Textarea, type CalendarEvent, type GanttTask } from "@/components/ui";
 
 const people = [{ name: "Alex Morgan" }, { name: "Jordan Lee" }, { name: "Sam Rivera" }, { name: "Taylor Kim" }, { name: "Maya Patel" }];
 const previewProject = { id: "preview", workspaceId: "preview", slug: "preview", name: "Preview project", status: "In progress" as const, progress: 72, detail: "Preview data", description: "A component-library preview using local data only.", ownerId: "preview-owner", owner: "Alex Morgan", startDate: "01/03/2026", startDateIso: "2026-03-01", dueDate: "30/03/2026", dueDateIso: "2026-03-30", workspace: "Preview workspace", tasks: { completed: 3, total: 5 }, taskList: [], milestones: [], team: [{ userId: "preview-owner", name: "Alex Morgan", role: "Project owner" }], activity: [], workflowStatuses: [] };
+
+const previewTasks: GanttTask[] = [
+  { id: "research", name: "Discovery and research", start: "2026-09-01", end: "2026-09-05", progress: 100, status: "Completed", color: "dark" },
+  { id: "design", name: "Interface design", start: "2026-09-04", end: "2026-09-11", progress: 68, status: "In progress" },
+  { id: "build", name: "Build and integration", start: "2026-09-10", end: "2026-09-19", progress: 24, status: "In progress" },
+  { id: "launch", name: "Launch", start: "2026-09-22", end: "2026-09-22", status: "Milestone", milestone: true },
+];
+
+const previewEvents: CalendarEvent[] = [
+  { id: "design-review", date: "2026-09-08", title: "Design review", color: "dark" },
+  { id: "team-sync", date: "2026-09-10", title: "Team sync", color: "accent" },
+  { id: "release", date: "2026-09-22", title: "Release day", color: "muted" },
+];
 
 export default function DevPage() {
   const [selectedPeople, setSelectedPeople] = useState([people[0].name]);
@@ -22,6 +35,8 @@ export default function DevPage() {
 <section className="space-y-4"><SectionTitle title="Dashboard card patterns" /><div className="grid gap-6 md:grid-cols-3"><StatCard label="Completed" value="14" detail="+12% this month" /><StatCard label="Created" value="8" detail="Across 4 projects" /><StatCard label="Due soon" value="3" detail="Next 7 days" danger /></div></section>
 <section className="space-y-4"><SectionTitle title="Kanban board" /><Kanban /></section>
 <section className="space-y-4"><SectionTitle title="Project details and editing" /><ProjectWorkspace project={previewProject} selectedWorkspace="Preview workspace" /></section>
+<section className="space-y-4"><SectionTitle title="Calendar" /><Calendar value="2026-09-08" events={previewEvents} /></section>
+<section className="space-y-4"><SectionTitle title="Gantt chart" /><GanttChart tasks={previewTasks} startDate="2026-09-01" endDate="2026-09-26" /></section>
 <section className="space-y-4"><SectionTitle title="Data visualization patterns" /><Card><CardHeader><div><CardTitle>Status overview</CardTitle><CardDescription>Current work across all projects</CardDescription></div><Badge variant="success">Updated just now</Badge></CardHeader><CardContent><div className="flex h-4 overflow-hidden rounded-full" aria-label="Status overview: 35% completed, 45% in progress, 20% todo"><div className="w-[35%] bg-tint-900" /><div className="w-[45%] bg-tint-500" /><div className="w-[20%] bg-tint-100" /></div><div className="mt-4 flex flex-wrap gap-4 text-xs text-secondary"><span>Completed 35%</span><span>In progress 45%</span><span>Todo 20%</span></div></CardContent></Card></section>
 <section className="space-y-4"><SectionTitle title="List and table patterns" /><Card><CardHeader><div><CardTitle>Recent activity</CardTitle><CardDescription>Latest updates from your team</CardDescription></div><Button variant="secondary" size="sm">See all</Button></CardHeader><CardContent className="space-y-1">{people.slice(0, 4).map((person, index) => <div key={person.name} className="flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-subtle"><Avatar name={person.name} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-primary">{person.name} <span className="font-normal text-secondary">moved a task to {index % 2 ? "In progress" : "Completed"}</span></p><p className="mt-0.5 text-xs text-tertiary">{index + 1} hour{index ? "s" : ""} ago</p></div><Badge variant={index % 2 ? "neutral" : "success"}>{index % 2 ? "In progress" : "Done"}</Badge></div>)}</CardContent></Card></section>
 </div></main>;
