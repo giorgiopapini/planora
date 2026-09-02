@@ -22,7 +22,7 @@ export type CalendarProps = {
 
 export function Calendar({ value, events = [], onChange, onEventClick, renderEvent, weekStartsOn = 1, className = "" }: CalendarProps) {
   const selected = value ? toDate(value) : undefined;
-  const [month, setMonth] = useState(() => startOfMonth(selected ?? new Date()));
+  const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const days = useMemo(() => getCalendarDays(month, weekStartsOn), [month, weekStartsOn]);
   const eventsByDate = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
