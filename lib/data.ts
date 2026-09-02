@@ -5,7 +5,9 @@ import type { Project, ProjectMember, ProjectTask, TaskPriority } from "@/lib/pr
 
 type ProfileRow = { id: string; full_name: string; email: string | null };
 type WorkspaceRow = { id: string; name: string; slug: string; description: string | null };
-type RoleRow = { id: string; role_key: string; name: string; is_system: boolean };
+export type WorkspacePermission = "owner_like" | "project_manager" | "normal_user";
+export type WorkspaceCapabilities = { userId: string; canManageMembers: boolean; canManageRoles: boolean; canManageProjects: boolean; canManageTasks: boolean; canUpdateTaskStatus: boolean; canDeleteWorkspace: boolean };
+type RoleRow = { id: string; role_key: string; name: string; permission_key: WorkspacePermission | null; is_system: boolean };
 type MemberRow = { workspace_id: string; user_id: string; role_id: string; status: string; profiles: ProfileRow | ProfileRow[] | null; workspace_roles: RoleRow | RoleRow[] | null };
 type ProjectRow = { id: string; workspace_id: string; slug: string; name: string; short_description: string | null; description: string; status: string; owner_id: string; start_date: string; due_date: string; workspaces: WorkspaceRow | WorkspaceRow[] | null; profiles: ProfileRow | ProfileRow[] | null };
 type ProjectCountTaskRow = { project_id: string; workflow_statuses: { category: string } | { category: string }[] | null };
@@ -40,14 +42,14 @@ export async function getWorkspaces() {
 
 export async function getWorkspaceMembers(workspaceId: string) {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("workspace_members").select("workspace_id, user_id, role_id, status, profiles!workspace_members_user_id_fkey(id, full_name, email), workspace_roles(id, role_key, name, is_system)").eq("workspace_id", workspaceId).neq("status", "removed").order("created_at");
+  const { data, error } = await supabase.from("workspace_members").select("workspace_id, user_id, role_id, status, profiles!workspace_members_user_id_fkey(id, full_name, email), workspace_roles(id, role_key, name, permission_key, is_system)").eq("workspace_id", workspaceId).neq("status", "removed").order("created_at");
   if (error) throw new Error(error.message);
   return (data ?? []) as MemberRow[];
 }
 
 export async function getWorkspaceRoles(workspaceId: string) {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("workspace_roles").select("id, role_key, name, is_system").eq("workspace_id", workspaceId).is("archived_at", null).order("is_system", { ascending: false }).order("name");
+  const { data, error } = await supabase.from("workspace_roles").select("id, role_key, name, permission_key, is_system").eq("workspace_id", workspaceId).is("archived_at", null).order("is_system", { ascending: false }).order("name");
   if (error) throw new Error(error.message);
   return (data ?? []) as RoleRow[];
 }
