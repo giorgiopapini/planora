@@ -27,40 +27,40 @@ Planora is a light, airy, professional project-management workspace. The visual 
 
 ## Color tokens
 
-| Token | Hex | Usage |
-|---|---|---|
-| `bg-page` | `#F7F8FA` | Application background |
-| `bg-surface` | `#FFFFFF` | Cards, panels, navigation |
-| `bg-subtle` | `#F9FAFB` | Secondary panels and hover surfaces |
-| `bg-muted` | `#F3F4F6` | Tracks, badges, disabled surfaces |
-| `border` | `#E5E7EB` | Borders and dividers |
-| `border-strong` | `#D1D5DB` | Focus-adjacent or emphasized borders |
-| `text-primary` | `#111827` | Headings and primary content |
-| `text-secondary` | `#6B7280` | Metadata, descriptions, breadcrumbs |
-| `text-tertiary` | `#9CA3AF` | Placeholder and low-emphasis content |
-| `text-link` | `#16A34A` | Inline links |
-| `accent` | `#16A34A` | Primary actions, active states, checkmarks |
-| `accent-hover` | `#15803D` | Accent hover/pressed state |
-| `accent-soft` | `#F0FDF4` | Selected and positive backgrounds |
-| `accent-border` | `#BBF7D0` | Positive borders |
-| `danger-soft` | `#FEE2E2` | Destructive icon backgrounds |
-| `danger` | `#DC2626` | Destructive actions and errors |
-| `warning-soft` | `#FEF3C7` | Warnings only |
-| `warning` | `#B45309` | Warning text/icons only |
-| `info-soft` | `#F3F4F6` | Informational background without blue |
+| Token            | Hex       | Usage                                      |
+| ---------------- | --------- | ------------------------------------------ |
+| `bg-page`        | `#F7F8FA` | Application background                     |
+| `bg-surface`     | `#FFFFFF` | Cards, panels, navigation                  |
+| `bg-subtle`      | `#F9FAFB` | Secondary panels and hover surfaces        |
+| `bg-muted`       | `#F3F4F6` | Tracks, badges, disabled surfaces          |
+| `border`         | `#E5E7EB` | Borders and dividers                       |
+| `border-strong`  | `#D1D5DB` | Focus-adjacent or emphasized borders       |
+| `text-primary`   | `#111827` | Headings and primary content               |
+| `text-secondary` | `#6B7280` | Metadata, descriptions, breadcrumbs        |
+| `text-tertiary`  | `#9CA3AF` | Placeholder and low-emphasis content       |
+| `text-link`      | `#16A34A` | Inline links                               |
+| `accent`         | `#16A34A` | Primary actions, active states, checkmarks |
+| `accent-hover`   | `#15803D` | Accent hover/pressed state                 |
+| `accent-soft`    | `#F0FDF4` | Selected and positive backgrounds          |
+| `accent-border`  | `#BBF7D0` | Positive borders                           |
+| `danger-soft`    | `#FEE2E2` | Destructive icon backgrounds               |
+| `danger`         | `#DC2626` | Destructive actions and errors             |
+| `warning-soft`   | `#FEF3C7` | Warnings only                              |
+| `warning`        | `#B45309` | Warning text/icons only                    |
+| `info-soft`      | `#F3F4F6` | Informational background without blue      |
 
 ### Chart tint scale
 
 Use one green hue family for status and priority visualizations. Always include text, values, or legends so color is not the only signal.
 
-| Token | Hex |
-|---|---|
+| Token      | Hex       |
+| ---------- | --------- |
 | `tint-900` | `#065F46` |
 | `tint-700` | `#059669` |
 | `tint-500` | `#34D399` |
 | `tint-300` | `#6EE7B7` |
 | `tint-100` | `#D1FAE5` |
-| `tint-50` | `#F0FDF4` |
+| `tint-50`  | `#F0FDF4` |
 
 ## Typography
 

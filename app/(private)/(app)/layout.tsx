@@ -4,9 +4,16 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function PrivateLayout({ children }: LayoutProps<"/">) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) redirect("/landing");
 
-  return <main className="min-h-screen bg-page"><AppNav />{children}</main>;
+  return (
+    <main className="min-h-screen bg-page">
+      <AppNav />
+      {children}
+    </main>
+  );
 }

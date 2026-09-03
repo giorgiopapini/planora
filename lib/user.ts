@@ -1,4 +1,9 @@
-export function getUserFullName(user: { user_metadata?: Record<string, unknown>; email?: string | null } | null) {
+export function getUserFullName(
+  user: {
+    user_metadata?: Record<string, unknown>;
+    email?: string | null;
+  } | null,
+) {
   if (!user) return "User";
 
   const fullName = user.user_metadata?.full_name;

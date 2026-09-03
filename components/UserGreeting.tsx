@@ -13,5 +13,9 @@ export function UserGreeting() {
   const { name } = useCurrentUser();
   const greeting = getGreeting(new Date().getHours());
 
-  return <h1 className="text-3xl font-semibold tracking-tight">{greeting}, {name}</h1>;
+  return (
+    <h1 className="text-3xl font-semibold tracking-tight">
+      {greeting}, {name}
+    </h1>
+  );
 }

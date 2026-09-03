@@ -1,5 +1,7 @@
-export type ProjectStatus = "In progress" | "On track" | "Planning" | "Archived";
-export type TaskStatus = "Todo" | "In progress" | "In review" | "Completed" | string;
+export type ProjectStatus =
+  "In progress" | "On track" | "Planning" | "Archived";
+export type TaskStatus =
+  "Todo" | "In progress" | "In review" | "Completed" | string;
 export type TaskPriority = "Low" | "Medium" | "High" | "Urgent";
 export type MilestoneStatus = "Completed" | "In progress" | "Upcoming";
 

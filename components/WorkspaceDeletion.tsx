@@ -6,7 +6,13 @@ import { deleteWorkspace } from "@/app/actions";
 import { DeletionConfirmation } from "@/components/DeletionConfirmation";
 import { Card, CardContent } from "@/components/ui";
 
-export function WorkspaceDeletion({ workspaceId, workspaceName }: { workspaceId: string; workspaceName: string }) {
+export function WorkspaceDeletion({
+  workspaceId,
+  workspaceName,
+}: {
+  workspaceId: string;
+  workspaceName: string;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
@@ -22,7 +28,11 @@ export function WorkspaceDeletion({ workspaceId, workspaceName }: { workspaceId:
       await deleteWorkspace({ workspaceId, workspaceName: confirmation });
       router.push("/workspaces");
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : "Workspace could not be deleted.");
+      setError(
+        actionError instanceof Error
+          ? actionError.message
+          : "Workspace could not be deleted.",
+      );
       setDeleting(false);
     }
   }
@@ -33,8 +43,43 @@ export function WorkspaceDeletion({ workspaceId, workspaceName }: { workspaceId:
     setOpen(true);
   }
 
-  return <>
-    <Card className="border-danger/30"><CardContent className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold text-danger">Danger zone</p><p className="mt-1 text-xs text-secondary">Permanently delete this workspace and everything in it.</p></div><button type="button" onClick={openDeletion} className="cursor-pointer text-left text-sm font-medium text-danger underline underline-offset-4 hover:text-red-700">Delete workspace</button></CardContent></Card>
-    <DeletionConfirmation open={open} entityName={workspaceName} entityLabel="workspace" description={<>Deleting <strong>{workspaceName}</strong> permanently removes this workspace, every project and task, team memberships, invitations, workflow statuses, activity, and all other related data.</>} confirmation={confirmation} onConfirmationChange={setConfirmation} error={error} deleting={deleting} onClose={() => setOpen(false)} onConfirm={handleDelete} />
-  </>;
+  return (
+    <>
+      <Card className="border-danger/30">
+        <CardContent className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-danger">Danger zone</p>
+            <p className="mt-1 text-xs text-secondary">
+              Permanently delete this workspace and everything in it.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={openDeletion}
+            className="cursor-pointer text-left text-sm font-medium text-danger underline underline-offset-4 hover:text-red-700"
+          >
+            Delete workspace
+          </button>
+        </CardContent>
+      </Card>
+      <DeletionConfirmation
+        open={open}
+        entityName={workspaceName}
+        entityLabel="workspace"
+        description={
+          <>
+            Deleting <strong>{workspaceName}</strong> permanently removes this
+            workspace, every project and task, team memberships, invitations,
+            workflow statuses, activity, and all other related data.
+          </>
+        }
+        confirmation={confirmation}
+        onConfirmationChange={setConfirmation}
+        error={error}
+        deleting={deleting}
+        onClose={() => setOpen(false)}
+        onConfirm={handleDelete}
+      />
+    </>
+  );
 }

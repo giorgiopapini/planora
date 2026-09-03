@@ -8,7 +8,8 @@ const variants: Record<ButtonVariant, string> = {
   secondary: "border border-border bg-surface text-primary hover:bg-subtle",
   ghost: "text-secondary hover:bg-muted hover:text-primary",
   danger: "bg-danger text-white hover:bg-red-700",
-  success: "border border-accent-border bg-accent-soft text-accent-hover hover:border-accent hover:bg-tint-100",
+  success:
+    "border border-accent-border bg-accent-soft text-accent-hover hover:border-accent hover:bg-tint-100",
 };
 
 const sizes: Record<ButtonSize, string> = {
@@ -22,7 +23,10 @@ export function Button({
   variant = "primary",
   size = "md",
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; size?: ButtonSize }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+}) {
   return (
     <button
       className={`cursor-pointer inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-120 ease-out disabled:cursor-not-allowed disabled:bg-muted disabled:text-tertiary ${variants[variant]} ${sizes[size]} ${className}`}

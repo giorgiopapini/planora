@@ -15,9 +15,11 @@ export function useCurrentUser() {
       if (mounted) setName(getUserFullName(data.user));
     });
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (mounted) setName(getUserFullName(session?.user ?? null));
-    });
+    const { data: subscription } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (mounted) setName(getUserFullName(session?.user ?? null));
+      },
+    );
 
     return () => {
       mounted = false;

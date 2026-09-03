@@ -9,6 +9,15 @@ const variants: Record<BadgeVariant, string> = {
   warning: "bg-warning-soft text-warning",
 };
 
-export function Badge({ variant = "count", className = "", ...props }: HTMLAttributes<HTMLSpanElement> & { variant?: BadgeVariant }) {
-  return <span className={`inline-flex min-h-6 items-center rounded-full px-2.5 text-xs font-medium ${variants[variant]} ${className}`} {...props} />;
+export function Badge({
+  variant = "count",
+  className = "",
+  ...props
+}: HTMLAttributes<HTMLSpanElement> & { variant?: BadgeVariant }) {
+  return (
+    <span
+      className={`inline-flex min-h-6 items-center rounded-full px-2.5 text-xs font-medium ${variants[variant]} ${className}`}
+      {...props}
+    />
+  );
 }
