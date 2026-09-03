@@ -29,6 +29,13 @@ function databaseStatus(value: string) {
 type WorkspacePermission = "owner_like" | "project_manager" | "normal_user";
 type WorkspaceCapability = "workspace_delete" | "member_manage" | "project_manage" | "task_manage";
 
+function workspaceRoleNameError(error: { message?: string } | null, fallback: string): Error {
+  if (error?.message?.includes("workspace_roles_unique_name")) {
+    return new Error("A role with this name already exists.");
+  }
+  return new Error(error?.message || fallback);
+}
+
 function workspacePermission(value: unknown): WorkspacePermission {
   if (value === "owner_like" || value === "project_manager" || value === "normal_user") return value;
   throw new Error("A valid workspace permission is required");
@@ -269,7 +276,7 @@ export async function createWorkspaceRole(input: { workspaceId: string; name: st
   if (["owner", "unknown"].includes(name.toLowerCase())) throw new Error("Owner and Unknown roles are reserved");
   const roleKey = slugify(name).replace(/-/g, "_");
   const { data, error } = await supabase.from("workspace_roles").insert({ workspace_id: input.workspaceId, name, role_key: `${roleKey}_${Date.now().toString(36)}`, permission_key: permissionKey, is_system: false }).select("id, role_key, name, permission_key, is_system").single();
-  if (error || !data) throw new Error(error?.message || "Role could not be created");
+  if (error || !data) throw workspaceRoleNameError(error, "Role could not be created");
   revalidatePath("/team");
   return { id: data.id, roleKey: data.role_key, name: data.name, permissionKey: (data.permission_key || "normal_user") as WorkspacePermission, isSystem: data.is_system };
 }
@@ -280,7 +287,7 @@ export async function renameWorkspaceRole(input: { workspaceId: string; roleId: 
   const name = text(input.name, "Role name");
   if (["owner", "unknown"].includes(name.toLowerCase())) throw new Error("Owner and Unknown roles are reserved");
   const { error } = await supabase.from("workspace_roles").update({ name }).eq("workspace_id", input.workspaceId).eq("id", input.roleId).eq("is_system", false);
-  if (error) throw new Error(error.message);
+  if (error) throw workspaceRoleNameError(error, "Role could not be renamed");
   revalidatePath("/team");
 }
 
