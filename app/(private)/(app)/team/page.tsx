@@ -1,6 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
 import { TeamMemberForm } from "@/components/TeamMemberForm";
 import {
+  getWorkspaceCapabilities,
   getWorkspaceInvitations,
   getWorkspaceMembers,
   getWorkspaceRoles,
@@ -11,20 +11,11 @@ type TeamPageProps = { searchParams: WorkspaceSearchParams };
 
 export default async function TeamPage({ searchParams }: TeamPageProps) {
   const workspace = await requireWorkspace(searchParams);
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data: canManageMembers, error: permissionError } = await supabase.rpc(
-    "has_workspace_permission",
-    { p_workspace_id: workspace.id, p_permission_key: "member_manage" },
-  );
-  if (permissionError) throw new Error(permissionError.message);
+  const capabilities = await getWorkspaceCapabilities(workspace.id);
   const [members, roles, invitations] = await Promise.all([
     getWorkspaceMembers(workspace.id),
     getWorkspaceRoles(workspace.id),
-    canManageMembers
+    capabilities.canManageMembers
       ? getWorkspaceInvitations(workspace.id)
       : Promise.resolve([]),
   ]);
@@ -41,6 +32,7 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
       email: profile?.email || "",
       roleId: member.role_id,
       role: role?.name || "Unknown",
+      permissionKey: role?.permission_key || "normal_user",
       status: member.status,
       isOwner: member.user_id === workspace.ownerId,
     };
@@ -61,6 +53,7 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
       email: invitation.email,
       roleId: invitation.role_id,
       role: role?.name || "Unknown",
+      permissionKey: role?.permission_key || "normal_user",
     };
   });
 
@@ -78,6 +71,9 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
             members={memberData}
             roles={roleData}
             invitations={invitationData}
+            permission={capabilities.permission}
+            canManageMembers={capabilities.canManageMembers}
+            canManageRoles={capabilities.canManageRoles}
           />
         </div>
       </header>

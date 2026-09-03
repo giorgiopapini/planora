@@ -40,11 +40,13 @@ import type {
   TaskPriority,
   TaskStatus,
 } from "@/lib/projects";
+import type { WorkspaceCapabilities } from "@/lib/data";
 
 type ProjectWorkspaceProps = {
   project: Project;
   selectedWorkspace: string;
   workspaceMembers?: { userId: string; name: string }[];
+  capabilities?: WorkspaceCapabilities;
 };
 type NewTaskForm = {
   title: string;
@@ -73,10 +75,23 @@ const blankTask: NewTaskForm = {
 const inputClass =
   "h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-primary outline-none placeholder:text-tertiary focus:border-accent focus:ring-2 focus:ring-accent/20";
 const noDueDate = "No due date";
+const previewCapabilities: WorkspaceCapabilities = {
+  userId: "",
+  permission: "owner_like",
+  canManageMembers: true,
+  canManageRoles: true,
+  canManageProjects: true,
+  canManageTasks: true,
+  canUpdateTaskStatus: true,
+  canDeleteWorkspace: true,
+  canViewAllProjects: true,
+  canViewAllTasks: true,
+};
 
 export function ProjectWorkspace({
   project: initialProject,
   selectedWorkspace,
+  capabilities = previewCapabilities,
   workspaceMembers = initialProject.team.map((member) => ({
     userId: member.userId,
     name: member.name,
@@ -450,12 +465,17 @@ export function ProjectWorkspace({
             {project.description}
           </p>
         </div>
-        <div className="flex shrink-0 flex-wrap gap-3">
-          <Button variant="secondary" onClick={() => setIsEditingProject(true)}>
-            Edit project
-          </Button>
-          <Button onClick={() => setIsAddingTask(true)}>+ Add task</Button>
-        </div>
+        {capabilities.canManageProjects && (
+          <div className="flex shrink-0 flex-wrap gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => setIsEditingProject(true)}
+            >
+              Edit project
+            </Button>
+            <Button onClick={() => setIsAddingTask(true)}>+ Add task</Button>
+          </div>
+        )}
       </header>
       {error && (
         <p
@@ -602,9 +622,21 @@ export function ProjectWorkspace({
                   key={task.id}
                   task={task}
                   statuses={taskStatuses}
-                  onStatusChange={(status) => changeTask(task.id, { status })}
-                  onEdit={() => openTaskEditor(task)}
-                  onDelete={() => void removeTask(task.id)}
+                  onStatusChange={
+                    capabilities.canUpdateTaskStatus
+                      ? (status) => changeTask(task.id, { status })
+                      : undefined
+                  }
+                  onEdit={
+                    capabilities.canManageTasks
+                      ? () => openTaskEditor(task)
+                      : undefined
+                  }
+                  onDelete={
+                    capabilities.canManageTasks
+                      ? () => void removeTask(task.id)
+                      : undefined
+                  }
                 />
               ))}
               {filteredTasks.length === 0 && (
@@ -624,23 +656,31 @@ export function ProjectWorkspace({
               tasks={ganttTasks}
               startDate={ganttStartDate}
               endDate={ganttEndDate}
-              onTaskClick={(task) => {
-                const source = project.taskList.find(
-                  (item) => item.id === task.id,
-                );
-                if (source) openTaskEditor(source);
-              }}
+              onTaskClick={
+                capabilities.canManageTasks
+                  ? (task) => {
+                      const source = project.taskList.find(
+                        (item) => item.id === task.id,
+                      );
+                      if (source) openTaskEditor(source);
+                    }
+                  : undefined
+              }
             />
           )}
           {taskView === "calendar" && (
             <Calendar
               events={calendarEvents}
-              onEventClick={(event) => {
-                const source = project.taskList.find(
-                  (item) => item.id === event.id,
-                );
-                if (source) openTaskEditor(source);
-              }}
+              onEventClick={
+                capabilities.canManageTasks
+                  ? (event) => {
+                      const source = project.taskList.find(
+                        (item) => item.id === event.id,
+                      );
+                      if (source) openTaskEditor(source);
+                    }
+                  : undefined
+              }
             />
           )}
           {taskView === "kanban" && (
@@ -650,219 +690,229 @@ export function ProjectWorkspace({
               onStatusChange={(taskId, status) =>
                 changeTask(taskId, { status })
               }
-              onTaskClick={openTaskEditor}
+              onTaskClick={
+                capabilities.canManageTasks ? openTaskEditor : undefined
+              }
             />
           )}
         </CardContent>
       </Card>
-      <Modal
-        open={editingTask !== null}
-        title="Edit task"
-        description="Update the task details and assignment."
-        onClose={() => setEditingTask(null)}
-      >
-        <form className="space-y-5" onSubmit={saveTask}>
-          <Input
-            id="edit-task-title"
-            label="Task name"
-            value={taskForm.title}
-            onChange={(event) =>
-              setTaskForm({ ...taskForm, title: event.target.value })
-            }
-            required
-          />
-          <Textarea
-            id="edit-task-detail"
-            label="Description"
-            rows={3}
-            value={taskForm.detail}
-            onChange={(event) =>
-              setTaskForm({ ...taskForm, detail: event.target.value })
-            }
-          />
-          <div className="grid gap-5 sm:grid-cols-2">
-            <DateInput
-              id="edit-task-start-date"
-              label="Start date"
-              value={taskForm.startDate}
+      {capabilities.canManageTasks && (
+        <Modal
+          open={editingTask !== null}
+          title="Edit task"
+          description="Update the task details and assignment."
+          onClose={() => setEditingTask(null)}
+        >
+          <form className="space-y-5" onSubmit={saveTask}>
+            <Input
+              id="edit-task-title"
+              label="Task name"
+              value={taskForm.title}
               onChange={(event) =>
-                setTaskForm({ ...taskForm, startDate: event.target.value })
+                setTaskForm({ ...taskForm, title: event.target.value })
               }
               required
             />
-            <DateInput
-              id="edit-task-due-date"
-              label="Due date"
-              value={taskForm.dueDate}
+            <Textarea
+              id="edit-task-detail"
+              label="Description"
+              rows={3}
+              value={taskForm.detail}
               onChange={(event) =>
-                setTaskForm({ ...taskForm, dueDate: event.target.value })
+                setTaskForm({ ...taskForm, detail: event.target.value })
               }
             />
+            <div className="grid gap-5 sm:grid-cols-2">
+              <DateInput
+                id="edit-task-start-date"
+                label="Start date"
+                value={taskForm.startDate}
+                onChange={(event) =>
+                  setTaskForm({ ...taskForm, startDate: event.target.value })
+                }
+                required
+              />
+              <DateInput
+                id="edit-task-due-date"
+                label="Due date"
+                value={taskForm.dueDate}
+                onChange={(event) =>
+                  setTaskForm({ ...taskForm, dueDate: event.target.value })
+                }
+              />
+              <Select
+                id="edit-task-priority"
+                label="Priority"
+                value={taskForm.priority}
+                onChange={(event) =>
+                  setTaskForm({
+                    ...taskForm,
+                    priority: event.target.value as TaskPriority,
+                  })
+                }
+              >
+                {priorities.map((priority) => (
+                  <option key={priority}>{priority}</option>
+                ))}
+              </Select>
+            </div>
             <Select
-              id="edit-task-priority"
-              label="Priority"
-              value={taskForm.priority}
+              id="edit-task-assignee"
+              label="Assignee"
+              value={taskForm.assigneeId}
               onChange={(event) =>
-                setTaskForm({
-                  ...taskForm,
-                  priority: event.target.value as TaskPriority,
-                })
+                setTaskForm({ ...taskForm, assigneeId: event.target.value })
               }
             >
-              {priorities.map((priority) => (
-                <option key={priority}>{priority}</option>
+              <option value="">Unassigned</option>
+              {workspaceMembers.map((member) => (
+                <option key={member.userId} value={member.userId}>
+                  {member.name}
+                </option>
               ))}
             </Select>
-          </div>
-          <Select
-            id="edit-task-assignee"
-            label="Assignee"
-            value={taskForm.assigneeId}
-            onChange={(event) =>
-              setTaskForm({ ...taskForm, assigneeId: event.target.value })
-            }
-          >
-            <option value="">Unassigned</option>
-            {workspaceMembers.map((member) => (
-              <option key={member.userId} value={member.userId}>
-                {member.name}
-              </option>
-            ))}
-          </Select>
-          <div className="flex justify-end gap-3 border-t border-border pt-5">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setEditingTask(null)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit">Save changes</Button>
-          </div>
-        </form>
-      </Modal>
-      <Modal
-        open={isEditingProject}
-        title="Edit project"
-        description="Keep the project information clear and current for your team."
-        onClose={() => setIsEditingProject(false)}
-      >
-        <ProjectEditForm
-          project={project}
-          onSave={saveProject}
-          onCancel={() => setIsEditingProject(false)}
-          onDelete={openProjectDeletion}
-          workspaceMembers={workspaceMembers}
+            <div className="flex justify-end gap-3 border-t border-border pt-5">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setEditingTask(null)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">Save changes</Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+      {capabilities.canManageProjects && (
+        <Modal
+          open={isEditingProject}
+          title="Edit project"
+          description="Keep the project information clear and current for your team."
+          onClose={() => setIsEditingProject(false)}
+        >
+          <ProjectEditForm
+            project={project}
+            onSave={saveProject}
+            onCancel={() => setIsEditingProject(false)}
+            onDelete={openProjectDeletion}
+            workspaceMembers={workspaceMembers}
+          />
+        </Modal>
+      )}
+      {capabilities.canManageProjects && (
+        <DeletionConfirmation
+          open={isDeletingProject}
+          entityName={project.name}
+          entityLabel="project"
+          description={
+            <>
+              Deleting <strong>{project.name}</strong> permanently removes this
+              project, every task, team membership, milestone, and all other
+              related data.
+            </>
+          }
+          confirmation={projectConfirmation}
+          onConfirmationChange={setProjectConfirmation}
+          error={error}
+          deleting={isDeletingProjectRequest}
+          onClose={() => setIsDeletingProject(false)}
+          onConfirm={removeProject}
         />
-      </Modal>
-      <DeletionConfirmation
-        open={isDeletingProject}
-        entityName={project.name}
-        entityLabel="project"
-        description={
-          <>
-            Deleting <strong>{project.name}</strong> permanently removes this
-            project, every task, team membership, milestone, and all other
-            related data.
-          </>
-        }
-        confirmation={projectConfirmation}
-        onConfirmationChange={setProjectConfirmation}
-        error={error}
-        deleting={isDeletingProjectRequest}
-        onClose={() => setIsDeletingProject(false)}
-        onConfirm={removeProject}
-      />
-      <Modal
-        open={isAddingTask}
-        title="Add a task"
-        description="Give the team enough context to move this work forward."
-        onClose={() => setIsAddingTask(false)}
-      >
-        <form className="space-y-5" onSubmit={addTask}>
-          <Input
-            id="new-project-task-title"
-            label="Task name"
-            value={taskForm.title}
-            onChange={(event) =>
-              setTaskForm({ ...taskForm, title: event.target.value })
-            }
-            placeholder="e.g. Review launch checklist"
-            required
-          />
-          <Textarea
-            id="new-project-task-detail"
-            label="Description"
-            value={taskForm.detail}
-            onChange={(event) =>
-              setTaskForm({ ...taskForm, detail: event.target.value })
-            }
-            rows={3}
-            placeholder="Add context, links, or a definition of done."
-          />
-          <div className="grid gap-5 sm:grid-cols-2">
-            <DateInput
-              id="new-project-task-start-date"
-              name="startDate"
-              label="Start date"
-              value={taskForm.startDate}
+      )}
+      {capabilities.canManageTasks && (
+        <Modal
+          open={isAddingTask}
+          title="Add a task"
+          description="Give the team enough context to move this work forward."
+          onClose={() => setIsAddingTask(false)}
+        >
+          <form className="space-y-5" onSubmit={addTask}>
+            <Input
+              id="new-project-task-title"
+              label="Task name"
+              value={taskForm.title}
               onChange={(event) =>
-                setTaskForm({ ...taskForm, startDate: event.target.value })
+                setTaskForm({ ...taskForm, title: event.target.value })
               }
+              placeholder="e.g. Review launch checklist"
               required
             />
-            <DateInput
-              id="new-project-task-due-date"
-              name="dueDate"
-              label="Due date"
-              value={taskForm.dueDate}
+            <Textarea
+              id="new-project-task-detail"
+              label="Description"
+              value={taskForm.detail}
               onChange={(event) =>
-                setTaskForm({ ...taskForm, dueDate: event.target.value })
+                setTaskForm({ ...taskForm, detail: event.target.value })
               }
+              rows={3}
+              placeholder="Add context, links, or a definition of done."
             />
+            <div className="grid gap-5 sm:grid-cols-2">
+              <DateInput
+                id="new-project-task-start-date"
+                name="startDate"
+                label="Start date"
+                value={taskForm.startDate}
+                onChange={(event) =>
+                  setTaskForm({ ...taskForm, startDate: event.target.value })
+                }
+                required
+              />
+              <DateInput
+                id="new-project-task-due-date"
+                name="dueDate"
+                label="Due date"
+                value={taskForm.dueDate}
+                onChange={(event) =>
+                  setTaskForm({ ...taskForm, dueDate: event.target.value })
+                }
+              />
+              <Select
+                id="new-project-task-priority"
+                label="Priority"
+                value={taskForm.priority}
+                onChange={(event) =>
+                  setTaskForm({
+                    ...taskForm,
+                    priority: event.target.value as TaskPriority,
+                  })
+                }
+              >
+                {priorities.map((priority) => (
+                  <option key={priority}>{priority}</option>
+                ))}
+              </Select>
+            </div>
             <Select
-              id="new-project-task-priority"
-              label="Priority"
-              value={taskForm.priority}
+              id="new-project-task-assignee"
+              label="Assignee"
+              value={taskForm.assigneeId}
               onChange={(event) =>
-                setTaskForm({
-                  ...taskForm,
-                  priority: event.target.value as TaskPriority,
-                })
+                setTaskForm({ ...taskForm, assigneeId: event.target.value })
               }
             >
-              {priorities.map((priority) => (
-                <option key={priority}>{priority}</option>
+              <option value="">Unassigned</option>
+              {project.team.map((member) => (
+                <option key={member.userId} value={member.userId}>
+                  {member.name}
+                </option>
               ))}
             </Select>
-          </div>
-          <Select
-            id="new-project-task-assignee"
-            label="Assignee"
-            value={taskForm.assigneeId}
-            onChange={(event) =>
-              setTaskForm({ ...taskForm, assigneeId: event.target.value })
-            }
-          >
-            <option value="">Unassigned</option>
-            {project.team.map((member) => (
-              <option key={member.userId} value={member.userId}>
-                {member.name}
-              </option>
-            ))}
-          </Select>
-          <div className="flex justify-end gap-3 border-t border-border pt-5">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setIsAddingTask(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit">Create task</Button>
-          </div>
-        </form>
-      </Modal>
+            <div className="flex justify-end gap-3 border-t border-border pt-5">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsAddingTask(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">Create task</Button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 }
@@ -1068,9 +1118,9 @@ function TaskRow({
 }: {
   task: ProjectTask;
   statuses: string[];
-  onStatusChange: (status: string) => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onStatusChange?: (status: string) => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }) {
   const priorityVariant =
     task.priority === "Urgent"
@@ -1121,24 +1171,29 @@ function TaskRow({
         <select
           id={`project-task-status-${task.id}`}
           value={task.status}
-          onChange={(event) => onStatusChange(event.target.value)}
-          className="h-8 rounded-md border border-border bg-surface px-2 text-xs text-secondary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+          disabled={!onStatusChange}
+          onChange={(event) => onStatusChange?.(event.target.value)}
+          className="h-8 rounded-md border border-border bg-surface px-2 text-xs text-secondary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:bg-muted"
         >
           {statuses.map((status) => (
             <option key={status}>{status}</option>
           ))}
         </select>
         {task.assignees[0] && <Avatar name={task.assignees[0]} size="sm" />}
-        <IconButton
-          icon="edit"
-          onClick={onEdit}
-          aria-label={`Edit ${task.title}`}
-        />
-        <IconButton
-          icon="delete"
-          onClick={onDelete}
-          aria-label={`Delete ${task.title}`}
-        />
+        {onEdit && (
+          <IconButton
+            icon="edit"
+            onClick={onEdit}
+            aria-label={`Edit ${task.title}`}
+          />
+        )}
+        {onDelete && (
+          <IconButton
+            icon="delete"
+            onClick={onDelete}
+            aria-label={`Delete ${task.title}`}
+          />
+        )}
       </div>
     </article>
   );

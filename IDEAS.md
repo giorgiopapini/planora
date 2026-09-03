@@ -12,7 +12,7 @@
 
 - Normal User Permissions: See only his tasks in the projects he is in.
 - Project Managers Permissions: See the projects they created, the projects they are assigned to and and every task of every user.
-- Owner Permissions: See every project and every task inside the workspace in which he is the owner.
+- Owner-like permission: See every project and every task inside the workspace in which he is the owner.
 
 NOTE: An use can have a role in a workspace and another role in another workspace, so the view might change from one workspace to another
 

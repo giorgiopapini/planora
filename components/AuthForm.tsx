@@ -8,7 +8,13 @@ import { Button, Card, CardContent, Input } from "@/components/ui";
 
 type AuthMode = "signin" | "signup";
 
-export function AuthForm({ mode }: { mode: AuthMode }) {
+export function AuthForm({
+  mode,
+  nextPath,
+}: {
+  mode: AuthMode;
+  nextPath?: string;
+}) {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordMismatch, setPasswordMismatch] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -20,7 +26,15 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const isSignUp = mode === "signup";
   const title = isSignUp ? "Create your account" : "Welcome back";
   const actionLabel = isSignUp ? "Sign up" : "Sign in";
-  const alternateHref = isSignUp ? "/signin" : "/signup";
+  const redirectPath =
+    nextPath?.startsWith("/") && !nextPath.startsWith("//")
+      ? nextPath
+      : "/workspaces";
+  const alternateHref = nextPath
+    ? `${isSignUp ? "/signin" : "/signup"}?next=${encodeURIComponent(nextPath)}`
+    : isSignUp
+      ? "/signin"
+      : "/signup";
   const alternateLabel = isSignUp
     ? "Already have an account? Sign in"
     : "Don't have an account? Sign up";
@@ -88,7 +102,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 );
                 return;
               }
-              router.push("/workspaces");
+              router.push(redirectPath);
               router.refresh();
             }}
           >

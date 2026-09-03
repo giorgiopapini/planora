@@ -8,7 +8,11 @@ import {
   CardTitle,
   Progress,
 } from "@/components/ui";
-import { getProjects, getWorkspaceMembers } from "@/lib/data";
+import {
+  getProjects,
+  getWorkspaceCapabilities,
+  getWorkspaceMembers,
+} from "@/lib/data";
 import { requireWorkspace, type WorkspaceSearchParams } from "@/lib/workspace";
 
 type ProjectsPageProps = { searchParams: WorkspaceSearchParams };
@@ -17,9 +21,12 @@ export default async function ProjectsPage({
   searchParams,
 }: ProjectsPageProps) {
   const workspace = await requireWorkspace(searchParams);
+  const capabilities = await getWorkspaceCapabilities(workspace.id);
   const [projects, members] = await Promise.all([
-    getProjects(workspace.id),
-    getWorkspaceMembers(workspace.id),
+    getProjects(workspace.id, capabilities),
+    capabilities.canManageProjects
+      ? getWorkspaceMembers(workspace.id)
+      : Promise.resolve([]),
   ]);
   const memberOptions = members.map((member) => {
     const profile = Array.isArray(member.profiles)
@@ -42,9 +49,11 @@ export default async function ProjectsPage({
         <p className="mt-2 text-sm text-secondary">
           Keep every initiative moving forward.
         </p>
-        <div className="mt-5">
-          <ProjectForm workspaceId={workspace.id} members={memberOptions} />
-        </div>
+        {capabilities.canManageProjects && (
+          <div className="mt-5">
+            <ProjectForm workspaceId={workspace.id} members={memberOptions} />
+          </div>
+        )}
       </header>
       <div className="grid gap-6 lg:grid-cols-3">
         {projects.map((project) => (

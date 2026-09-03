@@ -14,17 +14,21 @@ type WorkspaceRow = {
   name: string;
   slug: string;
   description: string | null;
+  archived_at?: string | null;
 };
 export type WorkspacePermission =
   "owner_like" | "project_manager" | "normal_user";
 export type WorkspaceCapabilities = {
   userId: string;
+  permission: WorkspacePermission;
   canManageMembers: boolean;
   canManageRoles: boolean;
   canManageProjects: boolean;
   canManageTasks: boolean;
   canUpdateTaskStatus: boolean;
   canDeleteWorkspace: boolean;
+  canViewAllProjects: boolean;
+  canViewAllTasks: boolean;
 };
 type RoleRow = {
   id: string;
@@ -66,6 +70,7 @@ type ProjectRow = {
 type ProjectCountTaskRow = {
   project_id: string;
   workflow_statuses: { category: string } | { category: string }[] | null;
+  task_assignees: { user_id: string }[];
 };
 type StatusRow = {
   id: string;
@@ -111,6 +116,7 @@ type ActivityRow = {
   id: number;
   action_label: string;
   target_label: string;
+  task_id?: string | null;
   created_at: string;
   profiles: ProfileRow | ProfileRow[] | null;
 };
@@ -172,6 +178,66 @@ function milestoneStatus(
       : "Upcoming";
 }
 
+export async function getWorkspaceCapabilities(
+  workspaceId: string,
+): Promise<WorkspaceCapabilities> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error("Authentication is required");
+  }
+
+  const [
+    { data: workspace, error: workspaceError },
+    { data: membership, error: membershipError },
+  ] = await Promise.all([
+    supabase
+      .from("workspaces")
+      .select("owner_id")
+      .eq("id", workspaceId)
+      .maybeSingle(),
+    supabase
+      .from("workspace_members")
+      .select("role_id, workspace_roles(permission_key)")
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .maybeSingle(),
+  ]);
+  if (workspaceError || membershipError) {
+    throw new Error(
+      workspaceError?.message ||
+        membershipError?.message ||
+        "Workspace permissions could not be loaded",
+    );
+  }
+  if (!workspace || !membership) {
+    throw new Error("Active workspace membership is required");
+  }
+
+  const role = one(membership.workspace_roles as RoleRow | RoleRow[] | null);
+  const permission: WorkspacePermission =
+    workspace.owner_id === user.id
+      ? "owner_like"
+      : role?.permission_key || "normal_user";
+  const canViewAllProjects = permission === "owner_like";
+  const canViewAllTasks = permission !== "normal_user";
+  return {
+    userId: user.id,
+    permission,
+    canManageMembers: permission !== "normal_user",
+    canManageRoles: workspace.owner_id === user.id,
+    canManageProjects: permission !== "normal_user",
+    canManageTasks: permission !== "normal_user",
+    canUpdateTaskStatus: true,
+    canDeleteWorkspace: permission === "owner_like",
+    canViewAllProjects,
+    canViewAllTasks,
+  };
+}
+
 export async function getCurrentProfile() {
   const supabase = await createClient();
   const {
@@ -195,13 +261,25 @@ export async function getCurrentProfile() {
 
 export async function getWorkspaces() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
   const { data, error } = await supabase
-    .from("workspaces")
-    .select("id, name, slug, description")
-    .is("archived_at", null)
-    .order("name");
+    .from("workspace_members")
+    .select("workspaces!inner(id, name, slug, description, archived_at)")
+    .eq("user_id", user.id)
+    .eq("status", "active");
   if (error) throw new Error(error.message);
-  return (data ?? []) as WorkspaceRow[];
+  return (data ?? [])
+    .map((membership) =>
+      one(membership.workspaces as WorkspaceRow | WorkspaceRow[] | null),
+    )
+    .filter(
+      (workspace): workspace is WorkspaceRow =>
+        workspace !== null && !workspace.archived_at,
+    )
+    .sort((left, right) => left.name.localeCompare(right.name));
 }
 
 export async function getWorkspaceMembers(workspaceId: string) {
@@ -245,59 +323,94 @@ export async function getWorkspaceInvitations(workspaceId: string) {
   return (data ?? []) as InvitationRow[];
 }
 
-export async function getProjects(workspaceId: string) {
+export async function getProjects(
+  workspaceId: string,
+  capabilities?: WorkspaceCapabilities,
+) {
   const supabase = await createClient();
+  const access = capabilities || (await getWorkspaceCapabilities(workspaceId));
+  const visibleProjectIds = access.canViewAllProjects
+    ? null
+    : await getVisibleProjectIds(supabase, workspaceId, access);
+  if (visibleProjectIds && visibleProjectIds.length === 0) return [];
+
+  let projectsQuery = supabase
+    .from("projects")
+    .select(
+      "id, workspace_id, slug, name, short_description, description, status, owner_id, start_date, due_date, workspaces(id, name, slug, description), profiles!projects_owner_id_fkey(id, full_name, email)",
+    )
+    .eq("workspace_id", workspaceId)
+    .is("archived_at", null)
+    .order("due_date")
+    .order("name");
+  let taskQuery = supabase
+    .from("tasks")
+    .select("project_id, workflow_statuses(category), task_assignees(user_id)")
+    .is("deleted_at", null);
+  if (visibleProjectIds) {
+    projectsQuery = projectsQuery.in("id", visibleProjectIds);
+    taskQuery = taskQuery.in("project_id", visibleProjectIds);
+  }
   const [
     { data: projects, error: projectsError },
     { data: taskRows, error: tasksError },
-  ] = await Promise.all([
-    supabase
-      .from("projects")
-      .select(
-        "id, workspace_id, slug, name, short_description, description, status, owner_id, start_date, due_date, workspaces(id, name, slug, description), profiles!projects_owner_id_fkey(id, full_name, email)",
-      )
-      .eq("workspace_id", workspaceId)
-      .is("archived_at", null)
-      .order("due_date")
-      .order("name"),
-    supabase
-      .from("tasks")
-      .select("project_id, workflow_statuses(category)")
-      .is("deleted_at", null),
-  ]);
+  ] = await Promise.all([projectsQuery, taskQuery]);
   if (projectsError) throw new Error(projectsError.message);
   if (tasksError) throw new Error(tasksError.message);
   const counts = new Map<string, { total: number; completed: number }>();
-  ((taskRows ?? []) as ProjectCountTaskRow[]).forEach((task) => {
-    const current = counts.get(task.project_id) || { total: 0, completed: 0 };
-    current.total += 1;
-    if (one(task.workflow_statuses)?.category === "completed")
-      current.completed += 1;
-    counts.set(task.project_id, current);
-  });
+  ((taskRows ?? []) as ProjectCountTaskRow[])
+    .filter(
+      (task) =>
+        access.canViewAllTasks ||
+        task.task_assignees.some(
+          (assignee) => assignee.user_id === access.userId,
+        ),
+    )
+    .forEach((task) => {
+      const current = counts.get(task.project_id) || {
+        total: 0,
+        completed: 0,
+      };
+      current.total += 1;
+      if (one(task.workflow_statuses)?.category === "completed")
+        current.completed += 1;
+      counts.set(task.project_id, current);
+    });
   return (projects ?? []).map((project) => {
     const count = counts.get(project.id) || { total: 0, completed: 0 };
     return mapProject(project as ProjectRow, count);
   });
 }
 
-export async function getProject(workspaceId: string, slug: string) {
-  const projects = await getProjects(workspaceId);
+export async function getProject(
+  workspaceId: string,
+  slug: string,
+  capabilities?: WorkspaceCapabilities,
+) {
+  const access = capabilities || (await getWorkspaceCapabilities(workspaceId));
+  const projects = await getProjects(workspaceId, access);
   const project = projects.find((item) => item.slug === slug);
   if (!project) return null;
-  return getProjectDetails(project);
+  return getProjectDetails(project, access);
 }
 
-export async function getOverview(workspaceId: string, userId: string) {
+export async function getOverview(
+  workspaceId: string,
+  userId: string,
+  capabilities?: WorkspaceCapabilities,
+) {
   const supabase = await createClient();
-  const { data: workspaceProjects, error: workspaceProjectsError } =
-    await supabase
-      .from("projects")
-      .select("id")
-      .eq("workspace_id", workspaceId)
-      .is("archived_at", null);
-  if (workspaceProjectsError) throw new Error(workspaceProjectsError.message);
-  const projectIds = (workspaceProjects ?? []).map((project) => project.id);
+  const access = capabilities || (await getWorkspaceCapabilities(workspaceId));
+  const projectIds =
+    (access.canViewAllProjects
+      ? (
+          await supabase
+            .from("projects")
+            .select("id")
+            .eq("workspace_id", workspaceId)
+            .is("archived_at", null)
+        ).data?.map((project) => project.id)
+      : await getVisibleProjectIds(supabase, workspaceId, access)) || [];
   const [
     { data: projects, error: projectsError },
     taskResult,
@@ -305,11 +418,14 @@ export async function getOverview(workspaceId: string, userId: string) {
     { data: members, error: membersError },
     { data: capacity, error: capacityError },
   ] = await Promise.all([
-    supabase
-      .from("projects")
-      .select("id, status, due_date")
-      .eq("workspace_id", workspaceId)
-      .is("archived_at", null),
+    projectIds.length
+      ? supabase
+          .from("projects")
+          .select("id, status, due_date")
+          .eq("workspace_id", workspaceId)
+          .in("id", projectIds)
+          .is("archived_at", null)
+      : Promise.resolve({ data: [], error: null }),
     projectIds.length
       ? supabase
           .from("tasks")
@@ -318,22 +434,45 @@ export async function getOverview(workspaceId: string, userId: string) {
           )
           .in("project_id", projectIds)
           .is("deleted_at", null)
+          .then((result) => {
+            if (access.canViewAllTasks) return result;
+            return {
+              data: (result.data || []).filter((task) =>
+                (task.task_assignees || []).some(
+                  (assignee) => assignee.user_id === access.userId,
+                ),
+              ),
+              error: result.error,
+            };
+          })
       : Promise.resolve({ data: [], error: null }),
-    supabase
-      .from("activity_events")
-      .select(
-        "id, action_label, target_label, created_at, profiles(id, full_name, email)",
-      )
-      .eq("workspace_id", workspaceId)
-      .order("created_at", { ascending: false })
-      .limit(6),
+    projectIds.length
+      ? supabase
+          .from("activity_events")
+          .select(
+            "id, action_label, target_label, task_id, created_at, profiles(id, full_name, email)",
+          )
+          .eq("workspace_id", workspaceId)
+          .in("project_id", projectIds)
+          .order("created_at", { ascending: false })
+          .limit(6)
+      : Promise.resolve({ data: [], error: null }),
     supabase
       .from("workspace_members")
       .select(
         "user_id, profiles!workspace_members_user_id_fkey(id, full_name, email)",
       )
       .eq("workspace_id", workspaceId)
-      .eq("status", "active"),
+      .eq("status", "active")
+      .then((result) => {
+        if (access.canViewAllTasks) return result;
+        return {
+          data: (result.data || []).filter(
+            (member) => member.user_id === access.userId,
+          ),
+          error: result.error,
+        };
+      }),
     supabase
       .from("member_capacity")
       .select("user_id, capacity_minutes, effective_from, effective_to")
@@ -413,19 +552,31 @@ export async function getOverview(workspaceId: string, userId: string) {
     metrics: { completed, created: projects?.length || 0, inProgress, dueSoon },
     status: { completed, inProgress, todo },
     workload,
-    activity: ((activity ?? []) as ActivityRow[]).map((event) => {
-      const profile = one(event.profiles);
-      return {
-        person: profile?.full_name || profile?.email || "User",
-        action: event.action_label,
-        target: event.target_label,
-        time: relativeTime(event.created_at),
-      };
-    }),
+    activity: ((activity ?? []) as ActivityRow[])
+      .filter((event) =>
+        access.canViewAllTasks && !event.task_id
+          ? true
+          : Boolean(
+              event.task_id &&
+              taskRows.some((task) => task.id === event.task_id),
+            ),
+      )
+      .map((event) => {
+        const profile = one(event.profiles);
+        return {
+          person: profile?.full_name || profile?.email || "User",
+          action: event.action_label,
+          target: event.target_label,
+          time: relativeTime(event.created_at),
+        };
+      }),
   };
 }
 
-async function getProjectDetails(project: Project) {
+async function getProjectDetails(
+  project: Project,
+  capabilities: WorkspaceCapabilities,
+) {
   const supabase = await createClient();
   const [
     { data: tasks, error: tasksError },
@@ -466,7 +617,7 @@ async function getProjectDetails(project: Project) {
     supabase
       .from("activity_events")
       .select(
-        "id, action_label, target_label, created_at, profiles(id, full_name, email)",
+        "id, action_label, target_label, task_id, created_at, profiles(id, full_name, email)",
       )
       .eq("project_id", project.id)
       .order("created_at", { ascending: false })
@@ -491,9 +642,15 @@ async function getProjectDetails(project: Project) {
   const statusMap = new Map(
     ((statuses ?? []) as StatusRow[]).map((status) => [status.id, status]),
   );
-  const taskList = ((tasks ?? []) as TaskRow[]).map((task) =>
-    mapTask(task, statusMap.get(task.status_id)),
-  );
+  const taskList = ((tasks ?? []) as TaskRow[])
+    .filter(
+      (task) =>
+        capabilities.canViewAllTasks ||
+        task.task_assignees.some(
+          (assignee) => assignee.user_id === capabilities.userId,
+        ),
+    )
+    .map((task) => mapTask(task, statusMap.get(task.status_id)));
   const projectMembers = (members ?? []).map((member) => {
     const profile = one(
       (member as { profiles: ProfileRow | ProfileRow[] | null }).profiles,
@@ -507,26 +664,77 @@ async function getProjectDetails(project: Project) {
   return {
     ...project,
     taskList,
-    team: projectMembers,
+    team: capabilities.canViewAllTasks
+      ? projectMembers
+      : projectMembers.filter(
+          (member) => member.userId === capabilities.userId,
+        ),
     milestones: ((milestones ?? []) as MilestoneRow[]).map((milestone) => ({
       title: milestone.title,
       date: displayDate(milestone.target_date),
       status: milestoneStatus(milestone.status),
     })),
-    activity: ((activity ?? []) as ActivityRow[]).map((event) => {
-      const profile = one(event.profiles);
-      return {
-        person: profile?.full_name || profile?.email || "User",
-        action: event.action_label,
-        target: event.target_label,
-        time: relativeTime(event.created_at),
-      };
-    }),
+    activity: ((activity ?? []) as ActivityRow[])
+      .filter((event) =>
+        capabilities.canViewAllTasks
+          ? true
+          : Boolean(
+              event.task_id &&
+              taskList.some((task) => task.id === event.task_id),
+            ),
+      )
+      .map((event) => {
+        const profile = one(event.profiles);
+        return {
+          person: profile?.full_name || profile?.email || "User",
+          action: event.action_label,
+          target: event.target_label,
+          time: relativeTime(event.created_at),
+        };
+      }),
     workflowStatuses: ((statuses ?? []) as StatusRow[]).map((status) => ({
       id: status.id,
       name: status.name,
     })),
   } satisfies Project;
+}
+
+async function getVisibleProjectIds(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  workspaceId: string,
+  capabilities: WorkspaceCapabilities,
+) {
+  if (capabilities.canViewAllProjects) return null;
+  const [
+    { data: memberships, error: membershipsError },
+    { data: created, error: createdError },
+  ] = await Promise.all([
+    supabase
+      .from("project_members")
+      .select("project_id, projects!inner(workspace_id)")
+      .eq("user_id", capabilities.userId)
+      .eq("projects.workspace_id", workspaceId),
+    capabilities.permission === "project_manager"
+      ? supabase
+          .from("projects")
+          .select("id")
+          .eq("workspace_id", workspaceId)
+          .eq("created_by", capabilities.userId)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (membershipsError || createdError) {
+    throw new Error(
+      membershipsError?.message ||
+        createdError?.message ||
+        "Project access could not be loaded",
+    );
+  }
+  return Array.from(
+    new Set([
+      ...(memberships || []).map((membership) => membership.project_id),
+      ...(created || []).map((project) => project.id),
+    ]),
+  );
 }
 
 function mapProject(

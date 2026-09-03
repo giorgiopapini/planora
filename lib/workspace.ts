@@ -22,7 +22,9 @@ export async function requireWorkspace(
 
   const { data: memberships, error } = await supabase
     .from("workspace_members")
-    .select("workspace_id, workspaces(id, name, slug, description, owner_id)")
+    .select(
+      "workspace_id, workspaces!inner(id, name, slug, description, owner_id, archived_at)",
+    )
     .eq("user_id", user.id)
     .eq("status", "active");
   if (error) throw new Error(error.message);
@@ -32,7 +34,9 @@ export async function requireWorkspace(
       const workspace = Array.isArray(membership.workspaces)
         ? membership.workspaces[0]
         : membership.workspaces;
-      return workspace ? { ...workspace, ownerId: workspace.owner_id } : null;
+      return workspace && !workspace.archived_at
+        ? { ...workspace, ownerId: workspace.owner_id }
+        : null;
     })
     .filter(Boolean) as Workspace[];
   const selected = reference

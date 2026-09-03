@@ -12,7 +12,11 @@ import {
   CardTitle,
   Progress,
 } from "@/components/ui";
-import { getCurrentProfile, getOverview } from "@/lib/data";
+import {
+  getCurrentProfile,
+  getOverview,
+  getWorkspaceCapabilities,
+} from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
 import { requireWorkspace, type WorkspaceSearchParams } from "@/lib/workspace";
 
@@ -20,6 +24,7 @@ type OverviewProps = { searchParams: WorkspaceSearchParams };
 
 export default async function Overview({ searchParams }: OverviewProps) {
   const workspace = await requireWorkspace(searchParams);
+  const capabilities = await getWorkspaceCapabilities(workspace.id);
   const supabase = await createClient();
   const {
     data: { user },
@@ -28,6 +33,7 @@ export default async function Overview({ searchParams }: OverviewProps) {
   const overview = await getOverview(
     workspace.id,
     profile?.id || user?.id || "",
+    capabilities,
   );
   const total =
     overview.status.completed +
@@ -183,10 +189,12 @@ export default async function Overview({ searchParams }: OverviewProps) {
         </CardContent>
       </Card>
 
-      <WorkspaceDeletion
-        workspaceId={workspace.id}
-        workspaceName={workspace.name}
-      />
+      {capabilities.canDeleteWorkspace && (
+        <WorkspaceDeletion
+          workspaceId={workspace.id}
+          workspaceName={workspace.name}
+        />
+      )}
     </div>
   );
 }

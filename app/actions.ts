@@ -1,8 +1,10 @@
 "use server";
 
 import { randomBytes, createHash } from "node:crypto";
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { sendWorkspaceInvitationEmail } from "@/lib/resend";
 
 async function authenticatedClient() {
   const supabase = await createClient();
@@ -69,6 +71,64 @@ async function assertWorkspacePermission(
   if (!data) throw new Error("You do not have permission to make this change");
 }
 
+async function assertProjectManageAccess(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  projectId: string,
+  workspaceId: string,
+  userId: string,
+) {
+  const [
+    { data: ownerLike, error: ownerLikeError },
+    { data: canManageProjects, error: permissionError },
+  ] = await Promise.all([
+    supabase.rpc("has_workspace_permission", {
+      p_workspace_id: workspaceId,
+      p_permission_key: "workspace_delete",
+    }),
+    supabase.rpc("has_workspace_permission", {
+      p_workspace_id: workspaceId,
+      p_permission_key: "project_manage",
+    }),
+  ]);
+  if (ownerLikeError || permissionError)
+    throw new Error(
+      ownerLikeError?.message ||
+        permissionError?.message ||
+        "Project permissions could not be loaded",
+    );
+  if (ownerLike) return;
+  if (!canManageProjects)
+    throw new Error("Project management access is required");
+
+  const [
+    { data: createdProject, error: createdError },
+    { data: projectMembership, error: membershipError },
+  ] = await Promise.all([
+    supabase
+      .from("projects")
+      .select("id")
+      .eq("id", projectId)
+      .eq("workspace_id", workspaceId)
+      .eq("created_by", userId)
+      .maybeSingle(),
+    supabase
+      .from("project_members")
+      .select("project_id")
+      .eq("project_id", projectId)
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+  if (createdError || membershipError) {
+    throw new Error(
+      createdError?.message ||
+        membershipError?.message ||
+        "Project access could not be loaded",
+    );
+  }
+  if (!createdProject && !projectMembership)
+    throw new Error("You do not have access to this project");
+}
+
 async function assertWorkspaceOwner(
   supabase: Awaited<ReturnType<typeof createClient>>,
   workspaceId: string,
@@ -93,22 +153,118 @@ async function workspaceOwnerId(
   return workspace.owner_id;
 }
 
+async function workspaceActorPermission(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  workspaceId: string,
+  userId: string,
+) {
+  const [
+    { data: workspace, error: workspaceError },
+    { data: membership, error: membershipError },
+  ] = await Promise.all([
+    supabase
+      .from("workspaces")
+      .select("owner_id")
+      .eq("id", workspaceId)
+      .maybeSingle(),
+    supabase
+      .from("workspace_members")
+      .select("workspace_roles(permission_key)")
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .maybeSingle(),
+  ]);
+  if (workspaceError || membershipError || !workspace || !membership) {
+    throw new Error(
+      workspaceError?.message ||
+        membershipError?.message ||
+        "Workspace permissions could not be loaded",
+    );
+  }
+  const role = Array.isArray(membership.workspace_roles)
+    ? membership.workspace_roles[0]
+    : membership.workspace_roles;
+  return workspace.owner_id === userId
+    ? "owner_like"
+    : role?.permission_key || "normal_user";
+}
+
 async function assertAssignableWorkspaceRole(
   supabase: Awaited<ReturnType<typeof createClient>>,
   workspaceId: string,
   roleId: string,
+  userId: string,
 ) {
-  const { data: role, error } = await supabase
-    .from("workspace_roles")
-    .select("role_key")
-    .eq("workspace_id", workspaceId)
-    .eq("id", roleId)
-    .is("archived_at", null)
-    .maybeSingle();
-  if (error || !role)
-    throw new Error(error?.message || "Workspace role not found");
+  await assertWorkspacePermission(supabase, workspaceId, "member_manage");
+  const [
+    { data: role, error: roleError },
+    { data: actorPermission, error: actorError },
+  ] = await Promise.all([
+    supabase
+      .from("workspace_roles")
+      .select("role_key, permission_key")
+      .eq("workspace_id", workspaceId)
+      .eq("id", roleId)
+      .is("archived_at", null)
+      .maybeSingle(),
+    workspaceActorPermission(supabase, workspaceId, userId),
+  ]);
+  if (roleError || actorError || !role)
+    throw new Error(
+      roleError?.message || actorError?.message || "Workspace role not found",
+    );
   if (role.role_key === "owner")
     throw new Error("The Owner role cannot be assigned");
+  if (
+    actorPermission === "project_manager" &&
+    role.permission_key !== "normal_user"
+  )
+    throw new Error("Project managers can only assign normal user roles");
+}
+
+async function assertManageableWorkspaceMember(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  workspaceId: string,
+  targetUserId: string,
+  actorUserId: string,
+) {
+  await assertWorkspacePermission(supabase, workspaceId, "member_manage");
+  const [
+    { data: workspace, error: workspaceError },
+    { data: target, error: targetError },
+    actorPermission,
+  ] = await Promise.all([
+    supabase
+      .from("workspaces")
+      .select("owner_id")
+      .eq("id", workspaceId)
+      .maybeSingle(),
+    supabase
+      .from("workspace_members")
+      .select("workspace_roles(permission_key)")
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", targetUserId)
+      .eq("status", "active")
+      .maybeSingle(),
+    workspaceActorPermission(supabase, workspaceId, actorUserId),
+  ]);
+  if (workspaceError || targetError || !workspace || !target)
+    throw new Error(
+      workspaceError?.message ||
+        targetError?.message ||
+        "Workspace member not found",
+    );
+  if (workspace.owner_id === targetUserId)
+    throw new Error("The workspace owner cannot be modified");
+  const targetRole = Array.isArray(target.workspace_roles)
+    ? target.workspace_roles[0]
+    : target.workspace_roles;
+  if (
+    actorPermission === "project_manager" &&
+    targetRole?.permission_key !== "normal_user"
+  )
+    throw new Error("Project managers can only manage normal users");
 }
 
 export async function deleteWorkspace(input: {
@@ -196,7 +352,7 @@ export async function updateProject(input: {
   dueDate: string;
   memberIds: string[];
 }) {
-  const { supabase } = await authenticatedClient();
+  const { supabase, user } = await authenticatedClient();
   const name = text(input.name, "Project name");
   const description = text(input.description, "Project description");
   const memberIds = Array.from(new Set([input.ownerId, ...input.memberIds]));
@@ -207,6 +363,12 @@ export async function updateProject(input: {
     .maybeSingle();
   if (projectError || !project)
     throw new Error(projectError?.message || "Project not found");
+  await assertProjectManageAccess(
+    supabase,
+    input.projectId,
+    project.workspace_id,
+    user.id,
+  );
   const { data: existing, error: existingError } = await supabase
     .from("project_members")
     .select("user_id")
@@ -222,16 +384,14 @@ export async function updateProject(input: {
 
   if (canManageProjects) {
     // Add the new owner first because the database validates owner membership at commit time.
-    const { error: addError } = await supabase
-      .from("project_members")
-      .upsert(
-        memberIds.map((userId) => ({
-          project_id: input.projectId,
-          user_id: userId,
-          project_role:
-            userId === input.ownerId ? "Project owner" : "Project team",
-        })),
-      );
+    const { error: addError } = await supabase.from("project_members").upsert(
+      memberIds.map((userId) => ({
+        project_id: input.projectId,
+        user_id: userId,
+        project_role:
+          userId === input.ownerId ? "Project owner" : "Project team",
+      })),
+    );
     if (addError) throw new Error(addError.message);
   }
   const { error } = await supabase
@@ -267,7 +427,7 @@ export async function deleteProject(input: {
   projectId: string;
   projectName: string;
 }) {
-  const { supabase } = await authenticatedClient();
+  const { supabase, user } = await authenticatedClient();
   const projectName = text(input.projectName, "Project name");
   const { data: project, error: projectError } = await supabase
     .from("projects")
@@ -276,6 +436,19 @@ export async function deleteProject(input: {
     .maybeSingle();
   if (projectError || !project)
     throw new Error(projectError?.message || "Project not found");
+  const { data: projectWorkspace, error: workspaceError } = await supabase
+    .from("projects")
+    .select("workspace_id")
+    .eq("id", input.projectId)
+    .maybeSingle();
+  if (workspaceError || !projectWorkspace)
+    throw new Error(workspaceError?.message || "Project not found");
+  await assertProjectManageAccess(
+    supabase,
+    input.projectId,
+    projectWorkspace.workspace_id,
+    user.id,
+  );
   if (project.name !== projectName)
     throw new Error("Project name confirmation does not match");
   const { error } = await supabase.rpc("delete_project", {
@@ -326,10 +499,11 @@ export async function createTask(input: {
     .maybeSingle();
   if (projectError || !project)
     throw new Error(projectError?.message || "Project not found");
-  await assertWorkspacePermission(
+  await assertProjectManageAccess(
     supabase,
+    input.projectId,
     project.workspace_id,
-    "task_manage",
+    user.id,
   );
   const { data: task, error } = await supabase
     .from("tasks")
@@ -388,6 +562,14 @@ export async function updateTask(input: {
     { p_workspace_id: workspace?.workspace_id ?? "" },
   );
   if (permissionError) throw new Error(permissionError.message);
+  if (canManageTasks) {
+    await assertProjectManageAccess(
+      supabase,
+      task.project_id,
+      workspace?.workspace_id ?? "",
+      user.id,
+    );
+  }
   if (!canManageTasks) {
     if (
       !input.statusName ||
@@ -448,15 +630,13 @@ export async function updateTask(input: {
       .eq("task_id", input.taskId);
     if (deleteError) throw new Error(deleteError.message);
     if (input.assigneeIds.length) {
-      const { error: addError } = await supabase
-        .from("task_assignees")
-        .insert(
-          input.assigneeIds.map((userId) => ({
-            task_id: input.taskId,
-            user_id: userId,
-            assigned_by: user.id,
-          })),
-        );
+      const { error: addError } = await supabase.from("task_assignees").insert(
+        input.assigneeIds.map((userId) => ({
+          task_id: input.taskId,
+          user_id: userId,
+          assigned_by: user.id,
+        })),
+      );
       if (addError) throw new Error(addError.message);
     }
   }
@@ -464,7 +644,7 @@ export async function updateTask(input: {
 }
 
 export async function deleteTask(taskId: string) {
-  const { supabase } = await authenticatedClient();
+  const { supabase, user } = await authenticatedClient();
   const { data: task, error: taskError } = await supabase
     .from("tasks")
     .select("project_id, projects(workspace_id)")
@@ -475,10 +655,11 @@ export async function deleteTask(taskId: string) {
   const taskWorkspace = Array.isArray(task.projects)
     ? task.projects[0]
     : task.projects;
-  await assertWorkspacePermission(
+  await assertProjectManageAccess(
     supabase,
+    task.project_id,
     taskWorkspace?.workspace_id ?? "",
-    "task_manage",
+    user.id,
   );
   const { data: deletedTask, error } = await supabase
     .from("tasks")
@@ -494,6 +675,26 @@ export async function deleteTask(taskId: string) {
   revalidatePath(`/projects/${task.project_id}`);
 }
 
+async function applicationUrl() {
+  const configuredUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
+  if (configuredUrl) {
+    try {
+      return new URL(configuredUrl).origin;
+    } catch {
+      throw new Error("NEXT_PUBLIC_APP_URL must be a valid URL");
+    }
+  }
+
+  const requestHeaders = await headers();
+  const host =
+    requestHeaders.get("x-forwarded-host") || requestHeaders.get("host");
+  if (!host) throw new Error("The application URL is not configured");
+  const protocol = requestHeaders.get("x-forwarded-proto") || "http";
+  if (protocol !== "http" && protocol !== "https")
+    throw new Error("The application protocol is invalid");
+  return `${protocol}://${host}`;
+}
+
 export async function inviteWorkspaceMember(input: {
   workspaceId: string;
   email: string;
@@ -505,10 +706,34 @@ export async function inviteWorkspaceMember(input: {
     supabase,
     input.workspaceId,
     input.roleId,
+    user.id,
   );
   const email = text(input.email, "Email").toLowerCase();
   const token = randomBytes(32).toString("hex");
   const tokenHash = createHash("sha256").update(token).digest("hex");
+  const invitationUrl = new URL("/accept-invitation", await applicationUrl());
+  invitationUrl.searchParams.set("token", token);
+  const [
+    { data: workspace, error: workspaceError },
+    { data: role, error: roleError },
+  ] = await Promise.all([
+    supabase
+      .from("workspaces")
+      .select("name")
+      .eq("id", input.workspaceId)
+      .maybeSingle(),
+    supabase
+      .from("workspace_roles")
+      .select("name")
+      .eq("id", input.roleId)
+      .eq("workspace_id", input.workspaceId)
+      .maybeSingle(),
+  ]);
+  if (workspaceError || !workspace)
+    throw new Error(workspaceError?.message || "Workspace not found");
+  if (roleError || !role)
+    throw new Error(roleError?.message || "Workspace role not found");
+
   const { data: invitation, error } = await supabase
     .from("workspace_invitations")
     .insert({
@@ -522,6 +747,32 @@ export async function inviteWorkspaceMember(input: {
     .single();
   if (error || !invitation)
     throw new Error(error?.message || "Invitation could not be created");
+
+  const inviterName =
+    user.user_metadata?.full_name ||
+    user.email?.split("@")[0] ||
+    "A Planora user";
+  try {
+    await sendWorkspaceInvitationEmail({
+      recipientEmail: email,
+      inviterName,
+      workspaceName: workspace.name,
+      roleName: role.name,
+      invitationUrl: invitationUrl.toString(),
+    });
+  } catch (emailError) {
+    await supabase
+      .from("workspace_invitations")
+      .delete()
+      .eq("id", invitation.id)
+      .eq("status", "pending");
+    throw new Error(
+      emailError instanceof Error
+        ? emailError.message
+        : "Invitation email could not be sent",
+    );
+  }
+
   revalidatePath("/team");
   return { id: invitation.id, email, roleId: input.roleId };
 }
@@ -530,11 +781,11 @@ export async function dismissWorkspaceInvitation(input: {
   workspaceId: string;
   invitationId: string;
 }) {
-  const { supabase } = await authenticatedClient();
+  const { supabase, user } = await authenticatedClient();
   await assertWorkspacePermission(supabase, input.workspaceId, "member_manage");
   const { data: invitation, error: invitationError } = await supabase
     .from("workspace_invitations")
-    .select("id, status")
+    .select("id, role_id, status")
     .eq("id", input.invitationId)
     .eq("workspace_id", input.workspaceId)
     .maybeSingle();
@@ -542,6 +793,12 @@ export async function dismissWorkspaceInvitation(input: {
     throw new Error(invitationError?.message || "Invitation not found");
   if (invitation.status !== "pending")
     throw new Error("Only pending invitations can be dismissed");
+  await assertAssignableWorkspaceRole(
+    supabase,
+    input.workspaceId,
+    invitation.role_id,
+    user.id,
+  );
   const { data: deletedInvitation, error } = await supabase
     .from("workspace_invitations")
     .delete()
@@ -574,15 +831,18 @@ export async function updateWorkspaceMemberRole(input: {
   userId: string;
   roleId: string;
 }) {
-  const { supabase } = await authenticatedClient();
-  await assertWorkspacePermission(supabase, input.workspaceId, "member_manage");
-  const ownerId = await workspaceOwnerId(supabase, input.workspaceId);
-  if (input.userId === ownerId)
-    throw new Error("The workspace owner cannot be modified");
+  const { supabase, user } = await authenticatedClient();
+  await assertManageableWorkspaceMember(
+    supabase,
+    input.workspaceId,
+    input.userId,
+    user.id,
+  );
   await assertAssignableWorkspaceRole(
     supabase,
     input.workspaceId,
     input.roleId,
+    user.id,
   );
   const { error } = await supabase
     .from("workspace_members")
@@ -597,11 +857,13 @@ export async function removeWorkspaceMember(input: {
   workspaceId: string;
   userId: string;
 }) {
-  const { supabase } = await authenticatedClient();
-  await assertWorkspacePermission(supabase, input.workspaceId, "member_manage");
-  const ownerId = await workspaceOwnerId(supabase, input.workspaceId);
-  if (input.userId === ownerId)
-    throw new Error("The workspace owner cannot be removed");
+  const { supabase, user } = await authenticatedClient();
+  await assertManageableWorkspaceMember(
+    supabase,
+    input.workspaceId,
+    input.userId,
+    user.id,
+  );
   const { error } = await supabase
     .from("workspace_members")
     .update({ status: "removed", removed_at: new Date().toISOString() })

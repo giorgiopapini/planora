@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProjectWorkspace } from "@/components/ProjectWorkspace";
-import { getProject, getWorkspaceMembers } from "@/lib/data";
+import {
+  getProject,
+  getWorkspaceCapabilities,
+  getWorkspaceMembers,
+} from "@/lib/data";
 import { requireWorkspace, type WorkspaceSearchParams } from "@/lib/workspace";
 
 type ProjectDetailsPageProps = {
@@ -15,19 +19,20 @@ export default async function ProjectDetailsPage({
 }: ProjectDetailsPageProps) {
   const { projectId } = await params;
   const workspace = await requireWorkspace(searchParams);
-  const project = await getProject(workspace.id, projectId);
+  const capabilities = await getWorkspaceCapabilities(workspace.id);
+  const project = await getProject(workspace.id, projectId, capabilities);
   if (!project) notFound();
-  const workspaceMembers = (await getWorkspaceMembers(workspace.id)).map(
-    (member) => {
-      const profile = Array.isArray(member.profiles)
-        ? member.profiles[0]
-        : member.profiles;
-      return {
-        userId: member.user_id,
-        name: profile?.full_name || profile?.email || "User",
-      };
-    },
-  );
+  const workspaceMembers = (
+    capabilities.canManageTasks ? await getWorkspaceMembers(workspace.id) : []
+  ).map((member) => {
+    const profile = Array.isArray(member.profiles)
+      ? member.profiles[0]
+      : member.profiles;
+    return {
+      userId: member.user_id,
+      name: profile?.full_name || profile?.email || "User",
+    };
+  });
   const workspaceQuery = `?workspace=${encodeURIComponent(workspace.id)}`;
 
   return (
@@ -49,6 +54,7 @@ export default async function ProjectDetailsPage({
         project={project}
         selectedWorkspace={workspace.name}
         workspaceMembers={workspaceMembers}
+        capabilities={capabilities}
       />
     </div>
   );
