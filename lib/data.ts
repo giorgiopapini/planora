@@ -9,6 +9,7 @@ export type WorkspacePermission = "owner_like" | "project_manager" | "normal_use
 export type WorkspaceCapabilities = { userId: string; canManageMembers: boolean; canManageRoles: boolean; canManageProjects: boolean; canManageTasks: boolean; canUpdateTaskStatus: boolean; canDeleteWorkspace: boolean };
 type RoleRow = { id: string; role_key: string; name: string; permission_key: WorkspacePermission | null; is_system: boolean };
 type MemberRow = { workspace_id: string; user_id: string; role_id: string; status: string; profiles: ProfileRow | ProfileRow[] | null; workspace_roles: RoleRow | RoleRow[] | null };
+type InvitationRow = { id: string; email: string; role_id: string; status: string; created_at: string; workspace_roles: RoleRow | RoleRow[] | null };
 type ProjectRow = { id: string; workspace_id: string; slug: string; name: string; short_description: string | null; description: string; status: string; owner_id: string; start_date: string; due_date: string; workspaces: WorkspaceRow | WorkspaceRow[] | null; profiles: ProfileRow | ProfileRow[] | null };
 type ProjectCountTaskRow = { project_id: string; workflow_statuses: { category: string } | { category: string }[] | null };
 type StatusRow = { id: string; key: string; name: string; category: string; position: number; is_terminal: boolean };
@@ -52,6 +53,13 @@ export async function getWorkspaceRoles(workspaceId: string) {
   const { data, error } = await supabase.from("workspace_roles").select("id, role_key, name, permission_key, is_system").eq("workspace_id", workspaceId).is("archived_at", null).order("is_system", { ascending: false }).order("name");
   if (error) throw new Error(error.message);
   return (data ?? []) as RoleRow[];
+}
+
+export async function getWorkspaceInvitations(workspaceId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("workspace_invitations").select("id, email, role_id, status, created_at, workspace_roles(id, role_key, name, permission_key, is_system)").eq("workspace_id", workspaceId).eq("status", "pending").order("created_at");
+  if (error) throw new Error(error.message);
+  return (data ?? []) as InvitationRow[];
 }
 
 export async function getProjects(workspaceId: string) {

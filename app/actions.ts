@@ -232,10 +232,22 @@ export async function inviteWorkspaceMember(input: { workspaceId: string; email:
   const email = text(input.email, "Email").toLowerCase();
   const token = randomBytes(32).toString("hex");
   const tokenHash = createHash("sha256").update(token).digest("hex");
-  const { error } = await supabase.from("workspace_invitations").insert({ workspace_id: input.workspaceId, email, role_id: input.roleId, invited_by: user.id, token_hash: tokenHash });
-  if (error) throw new Error(error.message);
+  const { data: invitation, error } = await supabase.from("workspace_invitations").insert({ workspace_id: input.workspaceId, email, role_id: input.roleId, invited_by: user.id, token_hash: tokenHash }).select("id").single();
+  if (error || !invitation) throw new Error(error?.message || "Invitation could not be created");
   revalidatePath("/team");
-  return `${process.env.NEXT_PUBLIC_APP_URL || ""}/accept-invitation?token=${token}`;
+  return { id: invitation.id, email, roleId: input.roleId };
+}
+
+export async function dismissWorkspaceInvitation(input: { workspaceId: string; invitationId: string }) {
+  const { supabase } = await authenticatedClient();
+  await assertWorkspacePermission(supabase, input.workspaceId, "member_manage");
+  const { data: invitation, error: invitationError } = await supabase.from("workspace_invitations").select("id, status").eq("id", input.invitationId).eq("workspace_id", input.workspaceId).maybeSingle();
+  if (invitationError || !invitation) throw new Error(invitationError?.message || "Invitation not found");
+  if (invitation.status !== "pending") throw new Error("Only pending invitations can be dismissed");
+  const { data: deletedInvitation, error } = await supabase.from("workspace_invitations").delete().eq("id", input.invitationId).eq("workspace_id", input.workspaceId).eq("status", "pending").select("id").maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!deletedInvitation) throw new Error("The invitation could not be dismissed. It may have already been accepted or removed.");
+  revalidatePath("/team");
 }
 
 export async function acceptWorkspaceInvitation(formData: FormData) {
