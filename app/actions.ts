@@ -290,6 +290,26 @@ export async function deleteWorkspace(input: {
   revalidatePath("/workspaces");
 }
 
+export async function deleteUser(input: { password: string }) {
+  const { supabase, user } = await authenticatedClient();
+  const password = text(input.password, "Password");
+  if (!user.email) throw new Error("Account email is required");
+
+  // Re-authenticate with the supplied password before deleting the account.
+  const { error: verificationError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password,
+  });
+  if (verificationError)
+    throw new Error("The password you entered is incorrect.");
+
+  const { error } = await supabase.rpc("delete_user");
+  if (error) throw new Error(error.message);
+
+  await supabase.auth.signOut();
+  revalidatePath("/");
+}
+
 export async function createWorkspace(name: string) {
   const { supabase, user } = await authenticatedClient();
   const workspaceName = text(name, "Workspace name");

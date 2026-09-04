@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { deleteUser } from "@/app/actions";
+import { DeletionConfirmation } from "@/components/DeletionConfirmation";
 import { Avatar } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -26,6 +28,10 @@ export function AppNav() {
   const router = useRouter();
   const supabase = createClient();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     if (isLoggingOut) router.replace("/landing");
@@ -47,6 +53,37 @@ export function AppNav() {
     document.addEventListener("pointerdown", closeProfileMenu);
     return () => document.removeEventListener("pointerdown", closeProfileMenu);
   }, []);
+
+  async function handleDeleteAccount(password: string) {
+    setIsDeletingAccount(true);
+    setDeleteError("");
+    try {
+      await deleteUser({ password });
+      setProfileOpen(false);
+      setIsLoggingOut(true);
+    } catch (actionError) {
+      setDeleteError(
+        actionError instanceof Error
+          ? actionError.message
+          : "Account could not be deleted.",
+      );
+      setIsDeletingAccount(false);
+    }
+  }
+
+  function openAccountDeletion() {
+    setDeletePassword("");
+    setDeleteError("");
+    setProfileOpen(false);
+    setDeleteAccountOpen(true);
+  }
+
+  function closeAccountDeletion() {
+    if (isDeletingAccount) return;
+    setDeleteAccountOpen(false);
+    setDeletePassword("");
+    setDeleteError("");
+  }
 
   const isActive = (href: string) => pathname.startsWith(href);
 
@@ -105,8 +142,38 @@ export function AppNav() {
               >
                 {isLoggingOut ? "Logging out…" : "Log out"}
               </button>
+              <div className="mt-1 border-t border-border pt-1">
+                <button
+                  type="button"
+                  onClick={openAccountDeletion}
+                  className="cursor-pointer block w-full rounded-md bg-danger-soft px-3 py-2 text-left text-sm font-medium text-danger transition-colors duration-120 hover:bg-danger hover:text-white"
+                  role="menuitem"
+                >
+                  Delete account
+                </button>
+              </div>
             </div>
           )}
+          <DeletionConfirmation
+            open={deleteAccountOpen}
+            mode="password"
+            entityLabel="account"
+            description={
+              <>
+                Deleting your account permanently removes your profile and
+                data. Workspaces where you are the only member are deleted;
+                workspaces you own are transferred to the most privileged
+                remaining member; you are simply removed from other
+                workspaces. This action cannot be undone.
+              </>
+            }
+            confirmation={deletePassword}
+            onConfirmationChange={setDeletePassword}
+            error={deleteError}
+            deleting={isDeletingAccount}
+            onClose={closeAccountDeletion}
+            onConfirm={handleDeleteAccount}
+          />
           <button
             type="button"
             className="ml-1 inline-flex h-10 w-10 items-center justify-center rounded-lg text-secondary hover:bg-muted hover:text-primary md:hidden"

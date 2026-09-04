@@ -6,7 +6,13 @@ import { Button, Input, Modal } from "@/components/ui";
 
 type DeletionConfirmationProps = {
   open: boolean;
-  entityName: string;
+  /**
+   * What unlocks the delete button:
+   * - "name": the user must type the entity name (workspaces, projects).
+   * - "password": the user must enter their account password (accounts).
+   */
+  mode?: "name" | "password";
+  entityName?: string;
   entityLabel: string;
   description: ReactNode;
   confirmation?: string;
@@ -19,6 +25,7 @@ type DeletionConfirmationProps = {
 
 export function DeletionConfirmation({
   open,
+  mode = "name",
   entityName,
   entityLabel,
   description,
@@ -31,7 +38,10 @@ export function DeletionConfirmation({
 }: DeletionConfirmationProps) {
   const [localConfirmation, setLocalConfirmation] = useState("");
   const confirmation = controlledConfirmation ?? localConfirmation;
-  const confirmed = confirmation === entityName;
+  const isPassword = mode === "password";
+  const confirmed = isPassword
+    ? confirmation.trim().length > 0
+    : confirmation === entityName;
   const setConfirmation = (value: string) => {
     if (controlledConfirmation === undefined) setLocalConfirmation(value);
     onConfirmationChange?.(value);
@@ -50,11 +60,16 @@ export function DeletionConfirmation({
         </div>
         <Input
           id={`${entityLabel}-delete-confirmation`}
-          label={`Type “${entityName}” to confirm`}
+          type={isPassword ? "password" : "text"}
+          label={
+            isPassword
+              ? "Enter your password"
+              : `Type “${entityName}” to confirm`
+          }
           value={confirmation}
           onChange={(event) => setConfirmation(event.target.value)}
           disabled={deleting}
-          autoComplete="off"
+          autoComplete={isPassword ? "current-password" : "off"}
         />
         {error && (
           <p className="text-sm text-danger" role="alert">
