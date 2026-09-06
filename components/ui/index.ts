@@ -13,6 +13,7 @@ export * from "./Progress";
 export * from "./ProjectHealth";
 export * from "./ProjectTimeline";
 export * from "./GanttChart";
+export * from "./TaskAssignmentHeatmap";
 export * from "./Calendar";
 export * from "./ProjectTeam";
 export * from "./ActivityList";

@@ -19,6 +19,7 @@ import {
   EditIconButton,
   GanttChart,
   Input,
+  TaskAssignmentHeatmap,
   MultiSelect,
   Progress,
   Select,
@@ -106,6 +107,49 @@ const previewEvents: CalendarEvent[] = [
   },
   { id: "team-sync", date: "2026-09-10", title: "Team sync", color: "accent" },
   { id: "release", date: "2026-09-22", title: "Release day", color: "muted" },
+];
+
+const previewAssignmentDays = [
+  { date: "2026-09-07", label: "Mon" },
+  { date: "2026-09-08", label: "Tue" },
+  { date: "2026-09-09", label: "Wed" },
+  { date: "2026-09-10", label: "Thu" },
+  { date: "2026-09-11", label: "Fri" },
+  { date: "2026-09-12", label: "Sat" },
+  { date: "2026-09-13", label: "Sun" },
+];
+
+const previewAssignments = [
+  {
+    id: "alex",
+    name: "Alex Morgan",
+    assignments: [2, 3, 1, 2, 3, 0, 0],
+    capacity: 12,
+  },
+  {
+    id: "jordan",
+    name: "Jordan Lee",
+    assignments: [1, 2, 3, 4, 3, 1, 0],
+    capacity: 12,
+  },
+  {
+    id: "sam",
+    name: "Sam Rivera",
+    assignments: [0, 1, 1, 2, 1, 0, 0],
+    capacity: 8,
+  },
+  {
+    id: "taylor",
+    name: "Taylor Kim",
+    assignments: [3, 4, 2, 3, 4, 1, 0],
+    capacity: 14,
+  },
+  {
+    id: "maya",
+    name: "Maya Patel",
+    assignments: [1, 0, 2, 1, 2, 0, 0],
+    capacity: 8,
+  },
 ];
 
 export default function DevPage() {
@@ -275,6 +319,13 @@ export default function DevPage() {
             tasks={previewTasks}
             startDate="2026-09-01"
             endDate="2026-09-26"
+          />
+        </section>
+        <section className="space-y-4">
+          <SectionTitle title="Task assignment heatmap" />
+          <TaskAssignmentHeatmap
+            days={previewAssignmentDays}
+            users={previewAssignments}
           />
         </section>
         <section className="space-y-4">

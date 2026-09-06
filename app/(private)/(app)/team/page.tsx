@@ -1,9 +1,11 @@
 import { TeamMemberForm } from "@/components/TeamMemberForm";
+import { TaskAssignmentHeatmap } from "@/components/ui";
 import {
   getWorkspaceCapabilities,
   getWorkspaceInvitations,
   getWorkspaceMembers,
   getWorkspaceRoles,
+  getWorkspaceTaskAssignmentHeatmap,
 } from "@/lib/data";
 import { requireWorkspace, type WorkspaceSearchParams } from "@/lib/workspace";
 
@@ -19,6 +21,11 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
       ? getWorkspaceInvitations(workspace.id)
       : Promise.resolve([]),
   ]);
+  const assignmentHeatmap = await getWorkspaceTaskAssignmentHeatmap(
+    workspace.id,
+    capabilities,
+    members,
+  );
   const memberData = members.map((member) => {
     const profile = Array.isArray(member.profiles)
       ? member.profiles[0]
@@ -77,6 +84,13 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
           />
         </div>
       </header>
+
+      <section aria-label="Team task assignments">
+        <TaskAssignmentHeatmap
+          days={assignmentHeatmap.days}
+          users={assignmentHeatmap.users}
+        />
+      </section>
     </div>
   );
 }

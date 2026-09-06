@@ -53,6 +53,12 @@ type InvitationRow = {
   created_at: string;
   workspace_roles: RoleRow | RoleRow[] | null;
 };
+type AssignmentTaskRow = {
+  start_date: string;
+  due_date: string | null;
+  workflow_statuses: { category: string } | { category: string }[] | null;
+  task_assignees: { user_id: string }[];
+};
 type ProjectRow = {
   id: string;
   workspace_id: string;
@@ -130,6 +136,38 @@ function displayDate(value: string | null | undefined) {
   const [year, month, day] = date.split("-").map(Number);
   if (!year || !month || !day) return "No due date";
   return `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`;
+}
+function getCurrentWeekRange() {
+  const today = new Date();
+  const todayUtc = new Date(
+    Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()),
+  );
+  const mondayOffset = (todayUtc.getUTCDay() + 6) % 7;
+  const start = addUtcDays(todayUtc, -mondayOffset);
+  return { start: formatDateKey(start), end: formatDateKey(addUtcDays(start, 6)) };
+}
+function parseDateOnly(value: string) {
+  const [year, month, day] = value.slice(0, 10).split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
+}
+function addUtcDays(value: Date, amount: number) {
+  const result = new Date(value);
+  result.setUTCDate(result.getUTCDate() + amount);
+  return result;
+}
+function daysBetweenUtc(start: string, end: Date) {
+  return Math.round((end.getTime() - parseDateOnly(start).getTime()) / 86400000);
+}
+function maxDate(value: Date, minimum: string) {
+  const lowerBound = parseDateOnly(minimum);
+  return value > lowerBound ? value : lowerBound;
+}
+function minDate(value: Date, maximum: string) {
+  const upperBound = parseDateOnly(maximum);
+  return value < upperBound ? value : upperBound;
+}
+function formatDateKey(value: Date) {
+  return value.toISOString().slice(0, 10);
 }
 function relativeTime(value: string) {
   const seconds = Math.max(
@@ -321,6 +359,87 @@ export async function getWorkspaceInvitations(workspaceId: string) {
     .order("created_at");
   if (error) throw new Error(error.message);
   return (data ?? []) as InvitationRow[];
+}
+
+export async function getWorkspaceTaskAssignmentHeatmap(
+  workspaceId: string,
+  capabilities?: WorkspaceCapabilities,
+  members?: MemberRow[],
+) {
+  const supabase = await createClient();
+  const access = capabilities || (await getWorkspaceCapabilities(workspaceId));
+  const workspaceMembers = members || (await getWorkspaceMembers(workspaceId));
+  const activeMembers = workspaceMembers.filter(
+    (member) =>
+      member.status === "active" &&
+      (access.canViewAllTasks || member.user_id === access.userId),
+  );
+  const range = getCurrentWeekRange();
+  let projectIds: string[];
+  if (access.canViewAllProjects) {
+    const { data, error } = await supabase
+      .from("projects")
+      .select("id")
+      .eq("workspace_id", workspaceId)
+      .is("archived_at", null);
+    if (error) throw new Error(error.message);
+    projectIds = (data ?? []).map((project) => project.id);
+  } else {
+    projectIds = (await getVisibleProjectIds(supabase, workspaceId, access)) || [];
+  }
+  const days = Array.from({ length: 7 }, (_, index) =>
+    addUtcDays(parseDateOnly(range.start), index),
+  );
+  const assignments = new Map(
+    activeMembers.map((member) => [member.user_id, Array(7).fill(0)]),
+  );
+
+  if (projectIds.length > 0) {
+    const { data, error } = await supabase
+      .from("tasks")
+      .select(
+        "start_date, due_date, workflow_statuses(category), task_assignees(user_id)",
+      )
+      .in("project_id", projectIds)
+      .is("deleted_at", null)
+      .lte("start_date", range.end)
+      .or(`due_date.is.null,due_date.gte.${range.start}`);
+    if (error) throw new Error(error.message);
+
+    for (const task of (data ?? []) as AssignmentTaskRow[]) {
+      const category = one(task.workflow_statuses)?.category;
+      if (category === "completed" || category === "cancelled") continue;
+      const start = maxDate(
+        parseDateOnly(task.start_date),
+        range.start,
+      );
+      const end = task.due_date
+        ? minDate(parseDateOnly(task.due_date), range.end)
+        : parseDateOnly(range.end);
+      if (start > end) continue;
+      const startIndex = daysBetweenUtc(range.start, start);
+      const endIndex = daysBetweenUtc(range.start, end);
+      task.task_assignees.forEach((assignee) => {
+        const counts = assignments.get(assignee.user_id);
+        if (!counts) return;
+        for (let index = startIndex; index <= endIndex; index += 1) {
+          counts[index] += 1;
+        }
+      });
+    }
+  }
+
+  return {
+    days: days.map((date) => ({ date: formatDateKey(date) })),
+    users: activeMembers.map((member) => {
+      const profile = one(member.profiles);
+      return {
+        id: member.user_id,
+        name: profile?.full_name || profile?.email || "User",
+        assignments: assignments.get(member.user_id) || Array(7).fill(0),
+      };
+    }),
+  };
 }
 
 export async function getProjects(
@@ -711,9 +830,10 @@ async function getVisibleProjectIds(
   ] = await Promise.all([
     supabase
       .from("project_members")
-      .select("project_id, projects!inner(workspace_id)")
+      .select("project_id, projects!inner(workspace_id, archived_at)")
       .eq("user_id", capabilities.userId)
-      .eq("projects.workspace_id", workspaceId),
+      .eq("projects.workspace_id", workspaceId)
+      .is("projects.archived_at", null),
     capabilities.permission === "project_manager"
       ? supabase
           .from("projects")
