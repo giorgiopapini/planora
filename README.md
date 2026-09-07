@@ -130,11 +130,7 @@ The public entry point introduces Planora and does not require authentication.
 - The `Product` and `Why Planora` links scroll to sections on the same page.
 - The preview is illustrative and does not query the database.
 
-**Add a screenshot here**
-
-```md
 ![Planora landing page](docs/screenshots/landing-page.png)
-```
 
 **HTML-style product description**
 
@@ -171,11 +167,7 @@ The sign-up page creates a Supabase Auth account.
 
 The form includes password visibility toggles, client-side password matching, loading feedback, translated labels, and error/status messages.
 
-**Add a screenshot here**
-
-```md
 ![Planora sign-up page](docs/screenshots/sign-up.png)
-```
 
 ### 3. Sign-in page — `/signin`
 
@@ -189,11 +181,7 @@ The sign-in page authenticates an existing user with Supabase.
 4. On success, the user is sent to `/workspaces` or a safe relative `next` path.
 5. Authenticated users visiting this page are redirected to `/workspaces`.
 
-**Add a screenshot here**
-
-```md
 ![Planora sign-in page](docs/screenshots/sign-in.png)
-```
 
 ### 4. Workspace selector — `/workspaces`
 
@@ -210,9 +198,7 @@ Selecting a workspace sends the user into the application with the workspace ide
 
 **Add a screenshot here**
 
-```md
 ![Planora workspace selector](docs/screenshots/workspaces.png)
-```
 
 ### 5. Overview dashboard — `/overview?workspace=<workspace-id>`
 
@@ -235,9 +221,7 @@ The page resolves the selected workspace with `requireWorkspace`, checks capabil
 
 **Add a screenshot here**
 
-```md
 ![Planora overview dashboard](docs/screenshots/overview.png)
-```
 
 ### 6. Projects directory — `/projects?workspace=<workspace-id>`
 
@@ -252,11 +236,7 @@ The projects page lists active projects in the selected workspace.
 
 Selecting a card opens the project detail page while preserving the workspace query parameter.
 
-**Add a screenshot here**
-
-```md
 ![Planora projects directory](docs/screenshots/projects.png)
-```
 
 ### 7. Project workspace — `/projects/<project-slug>?workspace=<workspace-id>`
 
@@ -290,14 +270,10 @@ The project workspace is the main operational page for a project.
 | Calendar | Displays task intervals and due dates in a calendar layout. |
 | Kanban | Groups tasks by workflow status and supports drag-and-drop status updates. |
 
-**Add a screenshot here**
-
-```md
 ![Project task list](docs/screenshots/project-workspace.png)
 ![Project Gantt view](docs/screenshots/project-gantt.png)
 ![Project calendar view](docs/screenshots/project-calendar.png)
 ![Project Kanban view](docs/screenshots/project-kanban.png)
-```
 
 ### 8. Team page — `/team?workspace=<workspace-id>`
 
@@ -313,11 +289,7 @@ The team page manages workspace collaboration and shows assignment distribution.
 
 Permission-sensitive controls are hidden or restricted when the current user cannot manage members or roles.
 
-**Add a screenshot here**
-
-```md
 ![Planora team management](docs/screenshots/team.png)
-```
 
 ### 9. Invitation acceptance — `/accept-invitation?token=<token>`
 
