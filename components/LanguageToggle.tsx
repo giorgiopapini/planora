@@ -16,8 +16,8 @@ export function LanguageToggle() {
       )}
       title={t("Language")}
     >
-      <span aria-hidden="true">{locale === "en" ? "IT" : "EN"}</span>
-      <span>{t(locale === "en" ? "Italian" : "English")}</span>
+      <span aria-hidden="true">{locale === "en" ? "🇮🇹" : "🇬🇧"}</span>
+      <span>{locale === "en" ? "IT" : "EN"}</span>
     </button>
   );
 }
