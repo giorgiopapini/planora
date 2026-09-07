@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/components/LocaleProvider";
 import { useEffect, useId, useRef, useState } from "react";
 
 type MultiSelectOption = { value: string; label: string };
@@ -27,6 +28,9 @@ export function MultiSelect({
   className = "",
   autoFocus = false,
 }: MultiSelectProps) {
+  const { t } = useTranslation();
+  const displayPlaceholder =
+    placeholder === "Select options" ? t("Select options") : placeholder;
   const generatedId = useId();
   const selectId = id || generatedId;
   const [open, setOpen] = useState(false);
@@ -81,7 +85,7 @@ export function MultiSelect({
               </span>
             ))
           ) : (
-            <span className="text-tertiary">{placeholder}</span>
+            <span className="text-tertiary">{displayPlaceholder}</span>
           )}
         </span>
         <span

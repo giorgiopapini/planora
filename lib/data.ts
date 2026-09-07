@@ -144,7 +144,10 @@ function getCurrentWeekRange() {
   );
   const mondayOffset = (todayUtc.getUTCDay() + 6) % 7;
   const start = addUtcDays(todayUtc, -mondayOffset);
-  return { start: formatDateKey(start), end: formatDateKey(addUtcDays(start, 6)) };
+  return {
+    start: formatDateKey(start),
+    end: formatDateKey(addUtcDays(start, 6)),
+  };
 }
 function parseDateOnly(value: string) {
   const [year, month, day] = value.slice(0, 10).split("-").map(Number);
@@ -156,7 +159,9 @@ function addUtcDays(value: Date, amount: number) {
   return result;
 }
 function daysBetweenUtc(start: string, end: Date) {
-  return Math.round((end.getTime() - parseDateOnly(start).getTime()) / 86400000);
+  return Math.round(
+    (end.getTime() - parseDateOnly(start).getTime()) / 86400000,
+  );
 }
 function maxDate(value: Date, minimum: string) {
   const lowerBound = parseDateOnly(minimum);
@@ -385,7 +390,8 @@ export async function getWorkspaceTaskAssignmentHeatmap(
     if (error) throw new Error(error.message);
     projectIds = (data ?? []).map((project) => project.id);
   } else {
-    projectIds = (await getVisibleProjectIds(supabase, workspaceId, access)) || [];
+    projectIds =
+      (await getVisibleProjectIds(supabase, workspaceId, access)) || [];
   }
   const days = Array.from({ length: 7 }, (_, index) =>
     addUtcDays(parseDateOnly(range.start), index),
@@ -409,10 +415,7 @@ export async function getWorkspaceTaskAssignmentHeatmap(
     for (const task of (data ?? []) as AssignmentTaskRow[]) {
       const category = one(task.workflow_statuses)?.category;
       if (category === "completed" || category === "cancelled") continue;
-      const start = maxDate(
-        parseDateOnly(task.start_date),
-        range.start,
-      );
+      const start = maxDate(parseDateOnly(task.start_date), range.start);
       const end = task.due_date
         ? minDate(parseDateOnly(task.due_date), range.end)
         : parseDateOnly(range.end);

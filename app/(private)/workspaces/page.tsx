@@ -4,6 +4,7 @@ import { getCurrentProfile, getWorkspaces } from "@/lib/data";
 import { Card, CardContent } from "@/components/ui";
 import { WorkspaceList } from "@/components/WorkspaceList";
 import { WorkspaceUserMenu } from "@/components/WorkspaceSelector";
+import { getServerTranslations } from "@/lib/i18n-server";
 
 export default async function WorkspacesPage() {
   const supabase = await createClient();
@@ -15,7 +16,8 @@ export default async function WorkspacesPage() {
     getCurrentProfile(),
     getWorkspaces(),
   ]);
-  const name = profile?.full_name || user.email?.split("@")[0] || "User";
+  const { t } = await getServerTranslations();
+  const name = profile?.full_name || user.email?.split("@")[0] || t("User");
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-page px-4 py-8 sm:px-6">
@@ -27,10 +29,10 @@ export default async function WorkspacesPage() {
             </p>
             <WorkspaceUserMenu name={name} />
             <h2 className="mt-4 text-2xl font-semibold tracking-tight">
-              Welcome back
+              {t("Welcome back")}
             </h2>
             <p className="mt-2 text-sm leading-6 text-secondary">
-              Choose a workspace to continue.
+              {t("Choose a workspace to continue.")}
             </p>
           </div>
           <div className="mt-8">

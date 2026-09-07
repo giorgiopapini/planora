@@ -1,3 +1,4 @@
+import { useTranslation } from "@/components/LocaleProvider";
 import { Badge } from "./Badge";
 import {
   Card,
@@ -14,18 +15,19 @@ type TimelineItem = {
 };
 
 export function ProjectTimeline({ items }: { items: TimelineItem[] }) {
+  const { t } = useTranslation();
   return (
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Milestones</CardTitle>
+          <CardTitle>{t("Milestones")}</CardTitle>
           <CardDescription>
-            Key moments on the path to delivery.
+            {t("Key moments on the path to delivery.")}
           </CardDescription>
         </div>
       </CardHeader>
       <CardContent>
-        <ol className="space-y-5" aria-label="Project milestones">
+        <ol className="space-y-5" aria-label={t("Project milestones")}>
           {items.map((item, index) => {
             const completed = item.status === "Completed";
             return (
@@ -60,7 +62,7 @@ export function ProjectTimeline({ items }: { items: TimelineItem[] }) {
                             : "count"
                       }
                     >
-                      {item.status}
+                      {t(item.status)}
                     </Badge>
                   </div>
                   <p className="mt-1 text-xs text-secondary">{item.date}</p>

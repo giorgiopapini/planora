@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/components/LocaleProvider";
 import { useMemo, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
@@ -37,6 +38,7 @@ export function GanttChart({
   renderTaskLabel,
   className = "",
 }: GanttChartProps) {
+  const { t, locale } = useTranslation();
   const normalizedTasks = useMemo(
     () =>
       tasks.map((task) => ({
@@ -64,11 +66,13 @@ export function GanttChart({
   return (
     <section
       className={`overflow-hidden rounded-xl border border-border bg-surface ${className}`}
-      aria-label="Project timeline"
+      aria-label={t("Project timeline")}
     >
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-6">
         <div>
-          <h2 className="text-base font-semibold text-primary">Timeline</h2>
+          <h2 className="text-base font-semibold text-primary">
+            {t("Timeline")}
+          </h2>
           <p className="mt-1 text-xs text-secondary">
             {formatRange(chartStart, chartEnd)}
           </p>
@@ -78,7 +82,7 @@ export function GanttChart({
             type="button"
             className="inline-flex h-8 w-8 items-center justify-center rounded-md text-secondary hover:bg-muted hover:text-primary"
             onClick={() => move(-7)}
-            aria-label="Previous timeline period"
+            aria-label={t("Previous timeline period")}
           >
             ‹
           </button>
@@ -87,13 +91,13 @@ export function GanttChart({
             className="h-8 rounded-md border border-border px-3 text-xs font-medium text-primary hover:bg-subtle"
             onClick={() => setOffset(0)}
           >
-            Today
+            {t("Today")}
           </button>
           <button
             type="button"
             className="inline-flex h-8 w-8 items-center justify-center rounded-md text-secondary hover:bg-muted hover:text-primary"
             onClick={() => move(7)}
-            aria-label="Next timeline period"
+            aria-label={t("Next timeline period")}
           >
             ›
           </button>
@@ -107,7 +111,7 @@ export function GanttChart({
             style={{ gridTemplateColumns: `${LABEL_WIDTH}px ${width}px` }}
           >
             <div className="flex items-center border-r border-border px-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-secondary">
-              Task
+              {t("Task")}
             </div>
             <div
               className="relative grid"
@@ -121,7 +125,7 @@ export function GanttChart({
                   className={`border-r border-border px-1 py-2 text-center ${isToday(day) ? "bg-accent-soft text-accent-hover" : "text-secondary"}`}
                 >
                   <span className="block text-[10px] uppercase">
-                    {new Intl.DateTimeFormat(undefined, { weekday: "short" })
+                    {new Intl.DateTimeFormat(locale, { weekday: "short" })
                       .format(day)
                       .slice(0, 2)}
                   </span>
@@ -148,7 +152,7 @@ export function GanttChart({
               <div
                 className="pointer-events-none absolute bottom-0 top-0 z-10 w-px bg-accent"
                 style={{ left: LABEL_WIDTH + todayPosition }}
-                aria-label="Today"
+                aria-label={t("Today")}
               />
             )}
             {normalizedTasks.map((task) => {
@@ -207,7 +211,7 @@ export function GanttChart({
                 className="border-b border-border px-4 py-8 text-center text-sm text-secondary"
                 style={{ marginLeft: LABEL_WIDTH }}
               >
-                No tasks in this timeline.
+                {t("No tasks in this timeline.")}
               </div>
             )}
           </div>
@@ -216,18 +220,18 @@ export function GanttChart({
       <div className="flex flex-wrap gap-4 border-t border-border px-4 py-3 text-xs text-secondary sm:px-6">
         <span className="inline-flex items-center gap-2">
           <i className="h-2.5 w-2.5 rounded-full bg-accent" />
-          In progress
+          {t("In progress")}
         </span>
         <span className="inline-flex items-center gap-2">
           <i className="h-2.5 w-2.5 rounded-full bg-tint-900" />
-          Completed
+          {t("Completed")}
         </span>
         <span className="inline-flex items-center gap-2">
           <i className="h-2.5 w-2.5 rounded-full bg-tint-100 ring-1 ring-accent-border" />
-          Upcoming
+          {t("Upcoming")}
         </span>
         <span className="ml-auto">
-          {tasks.length} task{tasks.length === 1 ? "" : "s"}
+          {tasks.length} {t("tasks")}
         </span>
       </div>
     </section>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "@/components/LocaleProvider";
 import { useRouter } from "next/navigation";
 import { createProject } from "@/app/actions";
 import {
@@ -28,6 +29,7 @@ export function ProjectForm({
   const [ownerId, setOwnerId] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+  const { t } = useTranslation();
   const memberOptions = members.map((member) => ({
     value: member.id,
     label: member.name,
@@ -60,7 +62,7 @@ export function ProjectForm({
       setError(
         actionError instanceof Error
           ? actionError.message
-          : "Project could not be created.",
+          : t("Project could not be created."),
       );
     }
   }
@@ -68,26 +70,28 @@ export function ProjectForm({
   return (
     <>
       <Button type="button" variant="primary" onClick={() => setOpen(true)}>
-        New project
+        {t("New project")}
       </Button>
       <Modal
         open={open}
-        title="Create a new project"
-        description="Set up the project and choose the people who will help move it forward."
+        title={t("Create a new project")}
+        description={t(
+          "Set up the project and choose the people who will help move it forward.",
+        )}
         onClose={closeForm}
       >
         <form className="space-y-5" onSubmit={submit}>
           <Input
             id="project-name"
             name="projectName"
-            label="Project name"
+            label={t("Project name")}
             placeholder="e.g. Website refresh"
             required
           />
           <Textarea
             id="project-description"
             name="projectDescription"
-            label="Project description"
+            label={t("Project description")}
             rows={3}
             placeholder="What is this project about?"
             required
@@ -96,33 +100,35 @@ export function ProjectForm({
             <DateInput
               id="project-start-date"
               name="startDate"
-              label="Start date"
+              label={t("Start date")}
               required
             />
             <DateInput
               id="project-due-date"
               name="dueDate"
-              label="Target date"
+              label={t("Target date")}
               required
             />
           </div>
           <MultiSelect
             id="project-team"
-            label="Project team"
+            label={t("Project team")}
             options={memberOptions}
             value={selectedMembers}
             onChange={setSelectedMembers}
-            placeholder="Choose team members"
-            helperText="Select everyone who should be assigned to this project."
+            placeholder={t("Choose team members")}
+            helperText={t(
+              "Select everyone who should be assigned to this project.",
+            )}
           />
           <Select
             id="project-owner"
-            label="Project owner"
+            label={t("Project owner")}
             value={ownerId}
             onChange={(event) => setOwnerId(event.target.value)}
             required
           >
-            <option value="">Select an owner</option>
+            <option value="">{t("Select an owner")}</option>
             {members
               .filter(
                 (member) =>
@@ -140,12 +146,16 @@ export function ProjectForm({
               <AvatarGroup
                 people={selectedMembers.map((id) => ({
                   name:
-                    members.find((member) => member.id === id)?.name || "User",
+                    members.find((member) => member.id === id)?.name ||
+                    t("User"),
                 }))}
               />
               <p className="text-xs text-secondary">
-                {selectedMembers.length} team member
-                {selectedMembers.length === 1 ? "" : "s"} selected
+                {selectedMembers.length}{" "}
+                {selectedMembers.length === 1
+                  ? t("team member")
+                  : t("team members")}{" "}
+                {t("selected")}
               </p>
             </div>
           )}
@@ -156,10 +166,10 @@ export function ProjectForm({
           )}
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={closeForm}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button type="submit" disabled={!ownerId}>
-              Create project
+              {t("Create project")}
             </Button>
           </div>
         </form>

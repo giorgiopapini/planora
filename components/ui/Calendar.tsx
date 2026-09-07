@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/components/LocaleProvider";
 import { useEffect, useMemo, useState } from "react";
 import type { PointerEvent, ReactNode } from "react";
 
@@ -54,6 +55,7 @@ export function Calendar({
   weekStartsOn = 1,
   className = "",
 }: CalendarProps) {
+  const { t, locale } = useTranslation();
   const selected = value ? toDate(value) : undefined;
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [resize, setResize] = useState<ResizeState | null>(null);
@@ -68,7 +70,7 @@ export function Calendar({
       ),
     [days],
   );
-  const monthLabel = new Intl.DateTimeFormat(undefined, {
+  const monthLabel = new Intl.DateTimeFormat(locale, {
     month: "long",
     year: "numeric",
   }).format(month);
@@ -143,13 +145,13 @@ export function Calendar({
   return (
     <section
       className={`rounded-xl border border-border bg-surface ${className}`}
-      aria-label="Calendar"
+      aria-label={t("Calendar")}
     >
       <header className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-6">
         <div>
           <h2 className="text-base font-semibold text-primary">{monthLabel}</h2>
           <p className="mt-1 text-xs text-secondary">
-            Select a day to view its schedule.
+            {t("Select a day to view its schedule.")}
           </p>
         </div>
         <div className="flex items-center gap-1">
@@ -157,7 +159,7 @@ export function Calendar({
             type="button"
             className="inline-flex h-8 w-8 items-center justify-center rounded-md text-secondary hover:bg-muted hover:text-primary"
             onClick={() => setMonth((current) => shiftMonth(current, -1))}
-            aria-label="Previous month"
+            aria-label={t("Previous month")}
           >
             ‹
           </button>
@@ -166,13 +168,13 @@ export function Calendar({
             className="h-8 rounded-md border border-border px-3 text-xs font-medium text-primary hover:bg-subtle"
             onClick={() => setMonth(startOfMonth(new Date()))}
           >
-            Today
+            {t("Today")}
           </button>
           <button
             type="button"
             className="inline-flex h-8 w-8 items-center justify-center rounded-md text-secondary hover:bg-muted hover:text-primary"
             onClick={() => setMonth((current) => shiftMonth(current, 1))}
-            aria-label="Next month"
+            aria-label={t("Next month")}
           >
             ›
           </button>
@@ -213,15 +215,15 @@ export function Calendar({
       <footer className="flex flex-wrap gap-4 px-4 py-3 text-xs text-secondary sm:px-6">
         <span className="inline-flex items-center gap-2">
           <i className="h-2.5 w-2.5 rounded-full bg-accent" />
-          Selected
+          {t("Selected")}
         </span>
         <span className="inline-flex items-center gap-2">
           <i className="h-2.5 w-2.5 rounded-full bg-accent-soft ring-1 ring-accent-border" />
-          Event
+          {t("Event")}
         </span>
         {onEventResize && (
           <span className="text-tertiary">
-            Drag either edge of a task to resize it
+            {t("Drag either edge of a task to resize it")}
           </span>
         )}
       </footer>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/components/LocaleProvider";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 
@@ -18,6 +19,7 @@ export function Modal({
   children: ReactNode;
   headerAction?: ReactNode;
 }) {
+  const { t } = useTranslation();
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -55,7 +57,7 @@ export function Modal({
               type="button"
               onClick={onClose}
               className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-xl text-secondary hover:bg-muted hover:text-primary"
-              aria-label="Close dialog"
+              aria-label={t("Close dialog")}
             >
               ×
             </button>

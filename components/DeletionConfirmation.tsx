@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import type { ReactNode } from "react";
+import { useTranslation } from "@/components/LocaleProvider";
 import { Button, Input, Modal } from "@/components/ui";
-
 type DeletionConfirmationProps = {
   open: boolean;
   /**
@@ -37,6 +37,7 @@ export function DeletionConfirmation({
   onConfirm,
 }: DeletionConfirmationProps) {
   const [localConfirmation, setLocalConfirmation] = useState("");
+  const { t } = useTranslation();
   const confirmation = controlledConfirmation ?? localConfirmation;
   const isPassword = mode === "password";
   const confirmed = isPassword
@@ -50,8 +51,8 @@ export function DeletionConfirmation({
   return (
     <Modal
       open={open}
-      title={`Delete ${entityLabel}?`}
-      description="This action cannot be undone."
+      title={`${t("Delete")} ${t(entityLabel)}?`}
+      description={t("This action cannot be undone.")}
       onClose={() => !deleting && onClose()}
     >
       <div className="space-y-5">
@@ -63,8 +64,8 @@ export function DeletionConfirmation({
           type={isPassword ? "password" : "text"}
           label={
             isPassword
-              ? "Enter your password"
-              : `Type “${entityName}” to confirm`
+              ? t("Enter your password")
+              : `${t("Type")} “${entityName}” ${t("to confirm")}`
           }
           value={confirmation}
           onChange={(event) => setConfirmation(event.target.value)}
@@ -91,7 +92,7 @@ export function DeletionConfirmation({
             onClick={() => void onConfirm(confirmation)}
             disabled={!confirmed || deleting}
           >
-            {deleting ? "Deleting…" : `Delete ${entityLabel}`}
+            {deleting ? t("Deleting…") : `${t("Delete")} ${t(entityLabel)}`}
           </Button>
         </div>
       </div>

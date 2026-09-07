@@ -9,6 +9,9 @@ import { Avatar } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
+import { useTranslation } from "@/components/LocaleProvider";
+import { LanguageToggle } from "@/components/LanguageToggle";
+
 const items = [
   { href: "/overview", label: "Overview" },
   { href: "/projects", label: "Projects" },
@@ -25,6 +28,7 @@ export function AppNav() {
   const [profileOpen, setProfileOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const { name } = useCurrentUser();
+  const { t } = useTranslation();
   const router = useRouter();
   const supabase = createClient();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -90,14 +94,14 @@ export function AppNav() {
   return (
     <nav
       className="border-b border-border bg-surface"
-      aria-label="Primary navigation"
+      aria-label={t("Primary navigation")}
     >
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:h-16 sm:px-6 lg:px-10">
         <div className="flex items-center gap-8">
           <Link
             href={`/workspaces`}
             className="text-xl font-semibold tracking-tight transition-colors duration-120 ease-out hover:text-accent sm:text-2xl"
-            aria-label="Planora overview"
+            aria-label={t("Planora overview")}
           >
             planora<span className="text-accent">.</span>
           </Link>
@@ -112,11 +116,12 @@ export function AppNav() {
             ))}
           </div>
         </div>
-        <div className="relative" ref={profileMenuRef}>
+        <div className="relative flex items-center gap-2" ref={profileMenuRef}>
+          <LanguageToggle />
           <button
             type="button"
             className="cursor-pointer flex items-center gap-3 rounded-lg p-1 text-left hover:bg-muted"
-            aria-label="Open user menu"
+            aria-label={t("Open user menu")}
             aria-expanded={profileOpen}
             onClick={() => setProfileOpen((open) => !open)}
           >
@@ -140,7 +145,7 @@ export function AppNav() {
                 className="cursor-pointer block w-full rounded-md px-3 py-2 text-left text-sm text-secondary hover:bg-muted hover:text-primary disabled:cursor-not-allowed disabled:text-tertiary"
                 role="menuitem"
               >
-                {isLoggingOut ? "Logging out…" : "Log out"}
+                {isLoggingOut ? t("Logging out…") : t("Log out")}
               </button>
               <div className="mt-1 border-t border-border pt-1">
                 <button
@@ -149,7 +154,7 @@ export function AppNav() {
                   className="cursor-pointer block w-full rounded-md bg-danger-soft px-3 py-2 text-left text-sm font-medium text-danger transition-colors duration-120 hover:bg-danger hover:text-white"
                   role="menuitem"
                 >
-                  Delete account
+                  {t("Delete account")}
                 </button>
               </div>
             </div>
@@ -160,11 +165,11 @@ export function AppNav() {
             entityLabel="account"
             description={
               <>
-                Deleting your account permanently removes your profile and
-                data. Workspaces where you are the only member are deleted;
-                workspaces you own are transferred to the most privileged
-                remaining member; you are simply removed from other
-                workspaces. This action cannot be undone.
+                Deleting your account permanently removes your profile and data.
+                Workspaces where you are the only member are deleted; workspaces
+                you own are transferred to the most privileged remaining member;
+                you are simply removed from other workspaces. This action cannot
+                be undone.
               </>
             }
             confirmation={deletePassword}
@@ -177,7 +182,7 @@ export function AppNav() {
           <button
             type="button"
             className="ml-1 inline-flex h-10 w-10 items-center justify-center rounded-lg text-secondary hover:bg-muted hover:text-primary md:hidden"
-            aria-label="Toggle navigation menu"
+            aria-label={t("Toggle navigation menu")}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((open) => !open)}
           >
@@ -218,6 +223,7 @@ function NavLink({
   mobile?: boolean;
   query?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <Link
       href={`${item.href}${query}`}
@@ -225,7 +231,7 @@ function NavLink({
       aria-current={active ? "page" : undefined}
       className={`${mobile ? "block border-b border-border py-3 last:border-b-0" : "border-b-2 py-5"} text-sm font-medium transition-colors duration-120 ease-out ${active ? "border-accent text-primary" : "border-transparent text-secondary hover:text-primary"}`}
     >
-      {item.label}
+      {t(item.label)}
     </Link>
   );
 }

@@ -12,6 +12,7 @@ import {
 } from "@/app/actions";
 import { DeletionConfirmation } from "@/components/DeletionConfirmation";
 import { Kanban } from "@/components/Kanban";
+import { useTranslation } from "@/components/LocaleProvider";
 import {
   Avatar,
   AvatarGroup,
@@ -99,6 +100,7 @@ export function ProjectWorkspace({
 }: ProjectWorkspaceProps) {
   const [project, setProject] = useState(initialProject);
   const router = useRouter();
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"All" | TaskStatus>("All");
   const [priorityFilter, setPriorityFilter] = useState<"All" | TaskPriority>(
@@ -235,7 +237,7 @@ export function ProjectWorkspace({
       setError(
         actionError instanceof Error
           ? actionError.message
-          : "Project could not be updated.",
+          : t("Project could not be updated."),
       );
     }
   }
@@ -256,7 +258,7 @@ export function ProjectWorkspace({
       setError(
         actionError instanceof Error
           ? actionError.message
-          : "Project could not be deleted.",
+          : t("Project could not be deleted."),
       );
       setIsDeletingProjectRequest(false);
     }
@@ -326,7 +328,7 @@ export function ProjectWorkspace({
       setError(
         actionError instanceof Error
           ? actionError.message
-          : "Task could not be updated.",
+          : t("Task could not be updated."),
       );
     }
   }
@@ -379,7 +381,7 @@ export function ProjectWorkspace({
       setError(
         actionError instanceof Error
           ? actionError.message
-          : "Task could not be deleted.",
+          : t("Task could not be deleted."),
       );
     }
   }
@@ -435,7 +437,7 @@ export function ProjectWorkspace({
       setError(
         actionError instanceof Error
           ? actionError.message
-          : "Task could not be created.",
+          : t("Task could not be created."),
       );
     }
   }
@@ -454,7 +456,7 @@ export function ProjectWorkspace({
                     : "success"
               }
             >
-              {project.status}
+              {t(project.status)}
             </Badge>
             <span className="text-xs text-tertiary">{selectedWorkspace}</span>
           </div>
@@ -471,9 +473,11 @@ export function ProjectWorkspace({
               variant="secondary"
               onClick={() => setIsEditingProject(true)}
             >
-              Edit project
+              {t("Edit project")}
             </Button>
-            <Button onClick={() => setIsAddingTask(true)}>+ Add task</Button>
+            <Button onClick={() => setIsAddingTask(true)}>
+              {t("+ Add task")}
+            </Button>
           </div>
         )}
       </header>
@@ -487,27 +491,27 @@ export function ProjectWorkspace({
       )}
       <section
         className="grid gap-6 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,1fr)]"
-        aria-label="Project overview"
+        aria-label={t("Project overview")}
       >
         <Card>
           <CardHeader>
             <div>
-              <CardTitle>Overview</CardTitle>
+              <CardTitle>{t("Overview")}</CardTitle>
               <CardDescription>
-                A quick read on the project scope and ownership.
+                {t("A quick read on the project scope and ownership.")}
               </CardDescription>
             </div>
             <AvatarGroup people={project.team} />
           </CardHeader>
           <CardContent>
             <div className="grid gap-6 sm:grid-cols-3">
-              <InfoItem label="Project owner" value={project.owner} />
-              <InfoItem label="Start date" value={project.startDate} />
-              <InfoItem label="Target date" value={project.dueDate} />
+              <InfoItem label={t("Project owner")} value={project.owner} />
+              <InfoItem label={t("Start date")} value={project.startDate} />
+              <InfoItem label={t("Target date")} value={project.dueDate} />
             </div>
             <div className="mt-6 border-t border-border pt-6">
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-tertiary">
-                Description
+                {t("Description")}
               </p>
               <p className="text-sm leading-6 text-secondary">
                 {project.description}
@@ -526,45 +530,47 @@ export function ProjectWorkspace({
       <Card>
         <CardHeader className="flex-wrap">
           <div>
-            <CardTitle>Project tasks</CardTitle>
+            <CardTitle>{t("Project tasks")}</CardTitle>
             <CardDescription>
-              Track the work, ownership, and delivery status in one place.
+              {t("Track the work, ownership, and delivery status in one place.")}
             </CardDescription>
           </div>
-          <Badge variant="count">{project.taskList.length} tasks</Badge>
+          <Badge variant="count">
+            {project.taskList.length} {t("tasks")}
+          </Badge>
         </CardHeader>
         <CardContent>
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-5">
             <div
               className="inline-flex rounded-lg border border-border bg-subtle p-1"
               role="tablist"
-              aria-label="Task visualization"
+              aria-label={t("Task visualization")}
             >
               <ViewTab
                 active={taskView === "list"}
                 onClick={() => setTaskView("list")}
-                label="Task list"
+                label={t("Task list")}
               />
               <ViewTab
                 active={taskView === "gantt"}
                 onClick={() => setTaskView("gantt")}
-                label="Gantt"
+                label={t("Gantt")}
               />
               <ViewTab
                 active={taskView === "calendar"}
                 onClick={() => setTaskView("calendar")}
-                label="Calendar"
+                label={t("Calendar")}
               />
               <ViewTab
                 active={taskView === "kanban"}
                 onClick={() => setTaskView("kanban")}
-                label="Kanban"
+                label={t("Kanban")}
               />
             </div>
             {taskView === "list" && (
               <div className="grid w-full gap-3 md:w-auto md:grid-cols-[minmax(220px,1fr)_180px_160px]">
                 <label className="relative block">
-                  <span className="sr-only">Search tasks</span>
+                  <span className="sr-only">{t("Search tasks")}</span>
                   <span
                     className="pointer-events-none absolute left-3 top-2.5 text-secondary"
                     aria-hidden="true"
@@ -574,12 +580,12 @@ export function ProjectWorkspace({
                   <input
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search tasks"
+                    placeholder={t("Search tasks")}
                     className={`${inputClass} pl-9`}
                   />
                 </label>
                 <label className="sr-only" htmlFor="task-status-filter">
-                  Filter by status
+                  {t("Filter by status")}
                 </label>
                 <select
                   id="task-status-filter"
@@ -589,13 +595,13 @@ export function ProjectWorkspace({
                   }
                   className={inputClass}
                 >
-                  <option value="All">All statuses</option>
+                  <option value="All">{t("All statuses")}</option>
                   {taskStatuses.map((status) => (
                     <option key={status}>{status}</option>
                   ))}
                 </select>
                 <label className="sr-only" htmlFor="task-priority-filter">
-                  Filter by priority
+                  {t("Filter by priority")}
                 </label>
                 <select
                   id="task-priority-filter"
@@ -607,7 +613,7 @@ export function ProjectWorkspace({
                   }
                   className={inputClass}
                 >
-                  <option value="All">All priorities</option>
+                  <option value="All">{t("All priorities")}</option>
                   {priorities.map((priority) => (
                     <option key={priority}>{priority}</option>
                   ))}
@@ -642,10 +648,10 @@ export function ProjectWorkspace({
               {filteredTasks.length === 0 && (
                 <div className="rounded-lg border border-dashed border-border-strong px-4 py-10 text-center">
                   <p className="text-sm font-medium text-primary">
-                    No tasks match these filters.
+                    {t("No tasks match these filters.")}
                   </p>
                   <p className="mt-1 text-xs text-secondary">
-                    Try a different search or clear one of the filters.
+                    {t("Try a different search or clear one of the filters.")}
                   </p>
                 </div>
               )}
@@ -700,14 +706,14 @@ export function ProjectWorkspace({
       {capabilities.canManageTasks && (
         <Modal
           open={editingTask !== null}
-          title="Edit task"
-          description="Update the task details and assignment."
+          title={t("Edit task")}
+          description={t("Update the task details and assignment.")}
           onClose={() => setEditingTask(null)}
         >
           <form className="space-y-5" onSubmit={saveTask}>
             <Input
               id="edit-task-title"
-              label="Task name"
+              label={t("Task name")}
               value={taskForm.title}
               onChange={(event) =>
                 setTaskForm({ ...taskForm, title: event.target.value })
@@ -716,7 +722,7 @@ export function ProjectWorkspace({
             />
             <Textarea
               id="edit-task-detail"
-              label="Description"
+              label={t("Description")}
               rows={3}
               value={taskForm.detail}
               onChange={(event) =>
@@ -726,7 +732,7 @@ export function ProjectWorkspace({
             <div className="grid gap-5 sm:grid-cols-2">
               <DateInput
                 id="edit-task-start-date"
-                label="Start date"
+                label={t("Start date")}
                 value={taskForm.startDate}
                 onChange={(event) =>
                   setTaskForm({ ...taskForm, startDate: event.target.value })
@@ -735,7 +741,7 @@ export function ProjectWorkspace({
               />
               <DateInput
                 id="edit-task-due-date"
-                label="Due date"
+                label={t("Due date")}
                 value={taskForm.dueDate}
                 onChange={(event) =>
                   setTaskForm({ ...taskForm, dueDate: event.target.value })
@@ -743,7 +749,7 @@ export function ProjectWorkspace({
               />
               <Select
                 id="edit-task-priority"
-                label="Priority"
+                label={t("Priority")}
                 value={taskForm.priority}
                 onChange={(event) =>
                   setTaskForm({
@@ -753,19 +759,21 @@ export function ProjectWorkspace({
                 }
               >
                 {priorities.map((priority) => (
-                  <option key={priority}>{priority}</option>
+                  <option key={priority} value={priority}>
+                    {t(priority)}
+                  </option>
                 ))}
               </Select>
             </div>
             <Select
               id="edit-task-assignee"
-              label="Assignee"
+              label={t("Assignee")}
               value={taskForm.assigneeId}
               onChange={(event) =>
                 setTaskForm({ ...taskForm, assigneeId: event.target.value })
               }
             >
-              <option value="">Unassigned</option>
+              <option value="">{t("Unassigned")}</option>
               {workspaceMembers.map((member) => (
                 <option key={member.userId} value={member.userId}>
                   {member.name}
@@ -778,9 +786,9 @@ export function ProjectWorkspace({
                 variant="ghost"
                 onClick={() => setEditingTask(null)}
               >
-                Cancel
+                {t("Cancel")}
               </Button>
-              <Button type="submit">Save changes</Button>
+              <Button type="submit">{t("Save changes")}</Button>
             </div>
           </form>
         </Modal>
@@ -788,8 +796,8 @@ export function ProjectWorkspace({
       {capabilities.canManageProjects && (
         <Modal
           open={isEditingProject}
-          title="Edit project"
-          description="Keep the project information clear and current for your team."
+          title={t("Edit project")}
+          description={t("Keep the project information clear and current for your team.")}
           onClose={() => setIsEditingProject(false)}
         >
           <ProjectEditForm
@@ -806,13 +814,10 @@ export function ProjectWorkspace({
           open={isDeletingProject}
           entityName={project.name}
           entityLabel="project"
-          description={
-            <>
-              Deleting <strong>{project.name}</strong> permanently removes this
-              project, every task, team membership, milestone, and all other
-              related data.
-            </>
-          }
+          description={t(
+            "Deleting {{name}} permanently removes this project, every task, team membership, milestone, and all other related data.",
+            { name: project.name },
+          )}
           confirmation={projectConfirmation}
           onConfirmationChange={setProjectConfirmation}
           error={error}
@@ -824,36 +829,36 @@ export function ProjectWorkspace({
       {capabilities.canManageTasks && (
         <Modal
           open={isAddingTask}
-          title="Add a task"
-          description="Give the team enough context to move this work forward."
+          title={t("Add a task")}
+          description={t("Give the team enough context to move this work forward.")}
           onClose={() => setIsAddingTask(false)}
         >
           <form className="space-y-5" onSubmit={addTask}>
             <Input
               id="new-project-task-title"
-              label="Task name"
+              label={t("Task name")}
               value={taskForm.title}
               onChange={(event) =>
                 setTaskForm({ ...taskForm, title: event.target.value })
               }
-              placeholder="e.g. Review launch checklist"
+              placeholder={t("e.g. Review launch checklist")}
               required
             />
             <Textarea
               id="new-project-task-detail"
-              label="Description"
+              label={t("Description")}
               value={taskForm.detail}
               onChange={(event) =>
                 setTaskForm({ ...taskForm, detail: event.target.value })
               }
               rows={3}
-              placeholder="Add context, links, or a definition of done."
+              placeholder={t("Add context, links, or a definition of done.")}
             />
             <div className="grid gap-5 sm:grid-cols-2">
               <DateInput
                 id="new-project-task-start-date"
                 name="startDate"
-                label="Start date"
+                label={t("Start date")}
                 value={taskForm.startDate}
                 onChange={(event) =>
                   setTaskForm({ ...taskForm, startDate: event.target.value })
@@ -863,7 +868,7 @@ export function ProjectWorkspace({
               <DateInput
                 id="new-project-task-due-date"
                 name="dueDate"
-                label="Due date"
+                label={t("Due date")}
                 value={taskForm.dueDate}
                 onChange={(event) =>
                   setTaskForm({ ...taskForm, dueDate: event.target.value })
@@ -871,7 +876,7 @@ export function ProjectWorkspace({
               />
               <Select
                 id="new-project-task-priority"
-                label="Priority"
+                label={t("Priority")}
                 value={taskForm.priority}
                 onChange={(event) =>
                   setTaskForm({
@@ -881,19 +886,21 @@ export function ProjectWorkspace({
                 }
               >
                 {priorities.map((priority) => (
-                  <option key={priority}>{priority}</option>
+                  <option key={priority} value={priority}>
+                    {t(priority)}
+                  </option>
                 ))}
               </Select>
             </div>
             <Select
               id="new-project-task-assignee"
-              label="Assignee"
+              label={t("Assignee")}
               value={taskForm.assigneeId}
               onChange={(event) =>
                 setTaskForm({ ...taskForm, assigneeId: event.target.value })
               }
             >
-              <option value="">Unassigned</option>
+              <option value="">{t("Unassigned")}</option>
               {project.team.map((member) => (
                 <option key={member.userId} value={member.userId}>
                   {member.name}
@@ -906,9 +913,9 @@ export function ProjectWorkspace({
                 variant="ghost"
                 onClick={() => setIsAddingTask(false)}
               >
-                Cancel
+                {t("Cancel")}
               </Button>
-              <Button type="submit">Create task</Button>
+              <Button type="submit">{t("Create task")}</Button>
             </div>
           </form>
         </Modal>
@@ -960,6 +967,7 @@ function ProjectEditForm({
   onDelete: () => void;
   workspaceMembers: { userId: string; name: string }[];
 }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     name: project.name,
     description: project.description,
@@ -996,14 +1004,14 @@ function ProjectEditForm({
     >
       <Input
         id="edit-project-name"
-        label="Project name"
+        label={t("Project name")}
         value={form.name}
         onChange={(event) => setForm({ ...form, name: event.target.value })}
         required
       />
       <Textarea
         id="edit-project-description"
-        label="Description"
+        label={t("Description")}
         rows={4}
         value={form.description}
         onChange={(event) =>
@@ -1025,40 +1033,46 @@ function ProjectEditForm({
               : memberIds[0] || "",
           })
         }
-        placeholder="Choose team members"
+        placeholder={t("Choose team members")}
       />
       {selectedTeam.length > 0 && (
         <div className="flex items-center gap-3 rounded-lg border border-border bg-subtle px-3 py-2">
           <AvatarGroup people={selectedTeam} />
           <p className="text-xs text-secondary">
-            {selectedTeam.length} team member
-            {selectedTeam.length === 1 ? "" : "s"} selected
+            {t(
+              selectedTeam.length === 1
+                ? "{{count}} team member selected"
+                : "{{count}} team members selected",
+              { count: selectedTeam.length },
+            )}
           </p>
         </div>
       )}
       <div className="grid gap-5 sm:grid-cols-2">
         <Select
           id="edit-project-status"
-          label="Status"
+          label={t("Status")}
           value={form.status}
           onChange={(event) =>
             setForm({ ...form, status: event.target.value as ProjectStatus })
           }
         >
           {projectStatuses.map((status) => (
-            <option key={status}>{status}</option>
+            <option key={status} value={status}>
+              {t(status)}
+            </option>
           ))}
         </Select>
         <Select
           id="edit-project-owner"
-          label="Owner"
+          label={t("Owner")}
           value={form.ownerId}
           onChange={(event) =>
             setForm({ ...form, ownerId: event.target.value })
           }
           disabled={!form.memberIds.length}
         >
-          <option value="">Select an owner</option>
+          <option value="">{t("Select an owner")}</option>
           {workspaceMembers
             .filter((member) => form.memberIds.includes(member.userId))
             .map((member) => (
@@ -1071,7 +1085,7 @@ function ProjectEditForm({
       <div className="grid gap-5 sm:grid-cols-2">
         <DateInput
           id="edit-project-start-date"
-          label="Start date"
+          label={t("Start date")}
           value={form.startDate}
           onChange={(event) =>
             setForm({ ...form, startDate: event.target.value })
@@ -1080,7 +1094,7 @@ function ProjectEditForm({
         />
         <DateInput
           id="edit-project-due-date"
-          label="Target date"
+          label={t("Target date")}
           value={form.dueDate}
           onChange={(event) =>
             setForm({ ...form, dueDate: event.target.value })
@@ -1094,14 +1108,14 @@ function ProjectEditForm({
           onClick={onDelete}
           className="cursor-pointer text-sm font-medium text-danger underline underline-offset-4 hover:text-red-700"
         >
-          Delete project
+          {t("Delete project")}
         </button>
         <div className="mt-5 flex justify-end gap-3">
           <Button type="button" variant="ghost" onClick={onCancel}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="submit" disabled={!form.memberIds.length}>
-            Save changes
+            {t("Save changes")}
           </Button>
         </div>
       </div>
@@ -1122,14 +1136,23 @@ function TaskRow({
   onEdit?: () => void;
   onDelete?: () => void;
 }) {
+  const { t, locale } = useTranslation();
   const priorityVariant =
     task.priority === "Urgent"
       ? "danger"
       : task.priority === "High"
         ? "warning"
         : "neutral";
-  const formattedStartDate = formatTaskDate(task.startDateIso);
-  const formattedDueDate = formatTaskDate(task.dueDateIso);
+  const formattedStartDate = formatTaskDate(
+    task.startDateIso,
+    locale,
+    t("No due date"),
+  );
+  const formattedDueDate = formatTaskDate(
+    task.dueDateIso,
+    locale,
+    t("No due date"),
+  );
   return (
     <article className="flex flex-col gap-4 rounded-lg px-3 py-4 transition-colors duration-120 hover:bg-subtle sm:flex-row sm:items-center">
       <div
@@ -1153,7 +1176,9 @@ function TaskRow({
           </span>
           <span aria-hidden="true">·</span>
           <span>
-            {task.assignees.length ? task.assignees.join(", ") : "Unassigned"}
+            {task.assignees.length
+              ? task.assignees.join(", ")
+              : t("Unassigned")}
           </span>
           {task.tags.length > 0 && (
             <>
@@ -1164,9 +1189,9 @@ function TaskRow({
         </div>
       </div>
       <div className="flex items-center gap-2 sm:shrink-0">
-        <Badge variant={priorityVariant}>{task.priority}</Badge>
+        <Badge variant={priorityVariant}>{t(task.priority)}</Badge>
         <label className="sr-only" htmlFor={`project-task-status-${task.id}`}>
-          Status for {task.title}
+          {t("Status for {{name}}", { name: task.title })}
         </label>
         <select
           id={`project-task-status-${task.id}`}
@@ -1176,7 +1201,9 @@ function TaskRow({
           className="h-8 rounded-md border border-border bg-surface px-2 text-xs text-secondary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:bg-muted"
         >
           {statuses.map((status) => (
-            <option key={status}>{status}</option>
+            <option key={status} value={status}>
+              {t(status)}
+            </option>
           ))}
         </select>
         {task.assignees[0] && <Avatar name={task.assignees[0]} size="sm" />}
@@ -1184,14 +1211,14 @@ function TaskRow({
           <IconButton
             icon="edit"
             onClick={onEdit}
-            aria-label={`Edit ${task.title}`}
+            aria-label={t("Edit {{name}}", { name: task.title })}
           />
         )}
         {onDelete && (
           <IconButton
             icon="delete"
             onClick={onDelete}
-            aria-label={`Delete ${task.title}`}
+            aria-label={t("Delete {{name}}", { name: task.title })}
           />
         )}
       </div>
@@ -1199,24 +1226,31 @@ function TaskRow({
   );
 }
 
-function formatTaskDate(rawDate: string | null) {
-  if (!rawDate) return noDueDate;
+function formatTaskDate(
+  rawDate: string | null,
+  locale: string,
+  fallback: string,
+) {
+  if (!rawDate) return fallback;
   const match = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return noDueDate;
+  if (!match) return fallback;
   const [, year, month, day] = match;
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeZone: "UTC",
   }).format(new Date(`${year}-${month}-${day}T00:00:00Z`));
 }
 
 function InfoItem({ label, value }: { label: string; value: string }) {
+  const { t } = useTranslation();
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-[0.08em] text-tertiary">
         {label}
       </p>
-      <p className="mt-2 text-sm font-medium text-primary">{value}</p>
+      <p className="mt-2 text-sm font-medium text-primary">
+        {value === noDueDate ? t("No due date") : value}
+      </p>
     </div>
   );
 }

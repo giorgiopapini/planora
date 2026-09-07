@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { DragEvent } from "react";
+import { useTranslation } from "@/components/LocaleProvider";
 import { Avatar, Badge, Card } from "@/components/ui";
 import type { ProjectTask } from "@/lib/projects";
 
@@ -18,6 +19,7 @@ export function Kanban({
   onStatusChange,
   onTaskClick,
 }: KanbanProps) {
+  const { t } = useTranslation();
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const columns = statuses.length
     ? statuses
@@ -35,9 +37,11 @@ export function Kanban({
   return (
     <Card className="overflow-hidden">
       <div className="border-b border-border p-6">
-        <h3 className="text-base font-semibold text-primary">Task board</h3>
+        <h3 className="text-base font-semibold text-primary">
+          {t("Task board")}
+        </h3>
         <p className="mt-1 text-sm leading-6 text-secondary">
-          Drag tasks between columns to update their status.
+          {t("Drag tasks between columns to update their status.")}
         </p>
       </div>
       <div className="grid gap-px bg-border md:grid-cols-2 xl:grid-cols-4">
@@ -57,7 +61,7 @@ export function Kanban({
                     id={`kanban-${status}`}
                     className="text-sm font-semibold text-primary"
                   >
-                    {status}
+                    {t(status)}
                   </h4>
                   <Badge
                     variant={
@@ -68,7 +72,7 @@ export function Kanban({
                   </Badge>
                 </div>
                 <p className="mt-1 text-xs text-tertiary">
-                  {columnDescription(status)}
+                  {t(columnDescription(status))}
                 </p>
               </div>
               <div className="min-h-32 space-y-3">
@@ -82,7 +86,7 @@ export function Kanban({
                 ))}
                 {columnTasks.length === 0 && (
                   <p className="rounded-lg border border-dashed border-border-strong px-3 py-6 text-center text-xs text-tertiary">
-                    Drop a task here
+                    {t("Drop a task here")}
                   </p>
                 )}
               </div>
@@ -103,6 +107,7 @@ function TaskCard({
   onClick?: () => void;
   onDragStart: () => void;
 }) {
+  const { t, locale } = useTranslation();
   const content = (
     <>
       <div className="flex items-start justify-between gap-3">
@@ -112,7 +117,7 @@ function TaskCard({
         <span
           className={`shrink-0 text-[11px] font-medium ${task.priority === "Urgent" || task.priority === "High" ? "text-danger" : task.priority === "Medium" ? "text-warning" : "text-secondary"}`}
         >
-          {task.priority}
+          {t(task.priority)}
         </span>
       </div>
       <p className="mt-2 line-clamp-2 text-xs leading-5 text-secondary">
@@ -121,7 +126,9 @@ function TaskCard({
       <div className="mt-4 flex items-center justify-between gap-2">
         <div
           className="flex -space-x-1"
-          aria-label={`Assigned to ${task.assignees.join(", ") || "no one"}`}
+          aria-label={t("Assigned to {{names}}", {
+            names: task.assignees.join(", ") || t("no one"),
+          })}
         >
           {task.assignees.map((person) => (
             <Avatar
@@ -133,7 +140,7 @@ function TaskCard({
           ))}
         </div>
         <span className="truncate text-right text-[11px] text-tertiary">
-          {formatDate(task.dueDateIso)}
+          {formatDate(task.dueDateIso, locale, t("No due date"))}
         </span>
       </div>
       <div className="mt-3 flex flex-wrap gap-1.5">
@@ -161,7 +168,10 @@ function TaskCard({
           onClick();
         }
       }}
-      aria-label={`${task.title}, ${task.priority} priority`}
+      aria-label={t("{{name}}, {{priority}} priority", {
+        name: task.title,
+        priority: t(task.priority),
+      })}
     >
       {content}
     </article>
@@ -176,12 +186,16 @@ function columnDescription(status: string) {
   if (normalized.includes("progress")) return "Currently being worked on";
   return "Ready to start";
 }
-function formatDate(date: string | null) {
-  if (!date) return "No due date";
+function formatDate(
+  date: string | null,
+  locale: string,
+  fallback: string,
+) {
+  if (!date) return fallback;
   const match = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return "No due date";
+  if (!match) return fallback;
   const [, year, month, day] = match;
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeZone: "UTC",
   }).format(new Date(`${year}-${month}-${day}T00:00:00Z`));

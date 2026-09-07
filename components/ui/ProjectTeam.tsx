@@ -1,3 +1,4 @@
+import { useTranslation } from "@/components/LocaleProvider";
 import { Avatar } from "./Avatar";
 import {
   Card,
@@ -10,13 +11,14 @@ import {
 type TeamMember = { name: string; role: string };
 
 export function ProjectTeam({ members }: { members: TeamMember[] }) {
+  const { t } = useTranslation();
   return (
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Project team</CardTitle>
+          <CardTitle>{t("Project team")}</CardTitle>
           <CardDescription>
-            People responsible for moving this forward.
+            {t("People responsible for moving this forward.")}
           </CardDescription>
         </div>
       </CardHeader>

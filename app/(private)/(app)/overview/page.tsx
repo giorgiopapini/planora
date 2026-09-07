@@ -18,11 +18,13 @@ import {
   getWorkspaceCapabilities,
 } from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
+import { getServerTranslations } from "@/lib/i18n-server";
 import { requireWorkspace, type WorkspaceSearchParams } from "@/lib/workspace";
 
 type OverviewProps = { searchParams: WorkspaceSearchParams };
 
 export default async function Overview({ searchParams }: OverviewProps) {
+  const { t } = await getServerTranslations();
   const workspace = await requireWorkspace(searchParams);
   const capabilities = await getWorkspaceCapabilities(workspace.id);
   const supabase = await createClient();
@@ -52,38 +54,38 @@ export default async function Overview({ searchParams }: OverviewProps) {
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="mb-2 text-sm text-secondary">
-            {workspace.name} / Overview
+            {workspace.name} / {t("Overview")}
           </p>
           <UserGreeting />
           <p className="mt-2 text-sm text-secondary">
-            Here&apos;s what&apos;s happening across your projects.
+            {t("Here's what's happening across your projects.")}
           </p>
         </div>
         <Link href={`/projects?workspace=${encodeURIComponent(workspace.id)}`}>
-          <Button variant="secondary">View projects</Button>
+          <Button variant="secondary">{t("View projects")}</Button>
         </Link>
       </header>
 
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         <Metric
-          label="Completed"
+          label={t("Completed")}
           value={overview.metrics.completed}
-          detail="Tasks in completed statuses"
+          detail={t("Tasks in completed statuses")}
         />
         <Metric
-          label="Projects"
+          label={t("Projects")}
           value={overview.metrics.created}
-          detail="Active projects in workspace"
+          detail={t("Active projects in workspace")}
         />
         <Metric
-          label="In progress"
+          label={t("In progress")}
           value={overview.metrics.inProgress}
-          detail="Tasks in active statuses"
+          detail={t("Tasks in active statuses")}
         />
         <Metric
-          label="Due soon"
+          label={t("Due soon")}
           value={overview.metrics.dueSoon}
-          detail="Due in the next 7 days"
+          detail={t("Due in the next 7 days")}
           danger={overview.metrics.dueSoon > 0}
         />
       </div>
@@ -92,12 +94,12 @@ export default async function Overview({ searchParams }: OverviewProps) {
         <Card>
           <CardHeader>
             <div>
-              <CardTitle>Status overview</CardTitle>
+              <CardTitle>{t("Status overview")}</CardTitle>
               <CardDescription>
-                Current work across all projects
+                {t("Current work across all projects")}
               </CardDescription>
             </div>
-            <Badge variant="success">Live data</Badge>
+            <Badge variant="success">{t("Live data")}</Badge>
           </CardHeader>
           <CardContent>
             <div
@@ -119,19 +121,19 @@ export default async function Overview({ searchParams }: OverviewProps) {
             </div>
             <div className="mt-5 grid grid-cols-3 gap-3 text-xs text-secondary">
               <span>
-                Completed{" "}
+                {t("Completed")}{" "}
                 <b className="block text-base text-primary">
                   {completedPercent}%
                 </b>
               </span>
               <span>
-                In progress{" "}
+                {t("In progress")}{" "}
                 <b className="block text-base text-primary">
                   {inProgressPercent}%
                 </b>
-              </span>
+              </span>{" "}
               <span>
-                Todo{" "}
+                {t("Todo")}{" "}
                 <b className="block text-base text-primary">{todoPercent}%</b>
               </span>
             </div>
@@ -140,9 +142,9 @@ export default async function Overview({ searchParams }: OverviewProps) {
         <Card>
           <CardHeader>
             <div>
-              <CardTitle>Team workload</CardTitle>
+              <CardTitle>{t("Team workload")}</CardTitle>
               <CardDescription>
-                Estimated task time against configured capacity
+                {t("Estimated task time against configured capacity")}
               </CardDescription>
             </div>
           </CardHeader>
@@ -152,7 +154,7 @@ export default async function Overview({ searchParams }: OverviewProps) {
             ))}
             {overview.workload.length === 0 && (
               <p className="text-sm text-secondary">
-                No active team members yet.
+                {t("No active team members yet.")}
               </p>
             )}
           </CardContent>
@@ -162,8 +164,10 @@ export default async function Overview({ searchParams }: OverviewProps) {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Recent activity</CardTitle>
-            <CardDescription>Latest updates from your team</CardDescription>
+            <CardTitle>{t("Recent activity")}</CardTitle>
+            <CardDescription>
+              {t("Latest updates from your team")}
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent className="grid gap-1 sm:grid-cols-2">
@@ -183,7 +187,7 @@ export default async function Overview({ searchParams }: OverviewProps) {
           ))}
           {overview.activity.length === 0 && (
             <p className="text-sm text-secondary">
-              No activity has been recorded yet.
+              {t("No activity has been recorded yet.")}
             </p>
           )}
         </CardContent>

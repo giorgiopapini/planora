@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useTranslation } from "@/components/LocaleProvider";
 import { Avatar } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 
@@ -9,6 +11,7 @@ export function WorkspaceUserMenu({ name }: { name: string }) {
   const [open, setOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
   const router = useRouter();
   const supabase = createClient();
 
@@ -32,11 +35,12 @@ export function WorkspaceUserMenu({ name }: { name: string }) {
   }
 
   return (
-    <div className="relative mt-5 inline-block" ref={menuRef}>
+    <div className="relative mt-5 inline-flex items-center gap-2" ref={menuRef}>
+      <LanguageToggle />
       <button
         type="button"
         className="flex cursor-pointer items-center gap-3 rounded-lg p-1 text-left hover:bg-muted"
-        aria-label="Open user menu"
+        aria-label={t("Open user menu")}
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
@@ -55,7 +59,7 @@ export function WorkspaceUserMenu({ name }: { name: string }) {
             className="block w-full cursor-pointer rounded-md px-3 py-2 text-sm text-secondary hover:bg-muted hover:text-primary disabled:cursor-not-allowed disabled:text-tertiary"
             role="menuitem"
           >
-            {isLoggingOut ? "Logging out…" : "Log out"}
+            {isLoggingOut ? t("Logging out…") : t("Log out")}
           </button>
         </div>
       )}

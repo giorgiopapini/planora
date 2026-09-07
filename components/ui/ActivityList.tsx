@@ -1,3 +1,4 @@
+import { useTranslation } from "@/components/LocaleProvider";
 import { Avatar } from "./Avatar";
 import {
   Card,
@@ -15,13 +16,14 @@ type Activity = {
 };
 
 export function ActivityList({ activities }: { activities: Activity[] }) {
+  const { t } = useTranslation();
   return (
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Recent activity</CardTitle>
+          <CardTitle>{t("Recent activity")}</CardTitle>
           <CardDescription>
-            Latest updates from the project team.
+            {t("Latest updates from the project team.")}
           </CardDescription>
         </div>
       </CardHeader>

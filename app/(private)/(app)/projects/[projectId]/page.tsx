@@ -6,6 +6,7 @@ import {
   getWorkspaceCapabilities,
   getWorkspaceMembers,
 } from "@/lib/data";
+import { getServerTranslations } from "@/lib/i18n-server";
 import { requireWorkspace, type WorkspaceSearchParams } from "@/lib/workspace";
 
 type ProjectDetailsPageProps = {
@@ -17,6 +18,7 @@ export default async function ProjectDetailsPage({
   params,
   searchParams,
 }: ProjectDetailsPageProps) {
+  const { t } = await getServerTranslations();
   const { projectId } = await params;
   const workspace = await requireWorkspace(searchParams);
   const capabilities = await getWorkspaceCapabilities(workspace.id);
@@ -39,13 +41,13 @@ export default async function ProjectDetailsPage({
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-10">
       <nav
         className="flex items-center gap-2 text-sm text-secondary"
-        aria-label="Breadcrumb"
+        aria-label={t("Breadcrumb")}
       >
         <Link
           href={`/projects${workspaceQuery}`}
           className="transition-colors duration-120 hover:text-primary"
         >
-          Projects
+          {t("Projects")}
         </Link>
         <span aria-hidden="true">/</span>
         <span className="truncate text-primary">{project.name}</span>

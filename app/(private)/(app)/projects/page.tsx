@@ -13,6 +13,7 @@ import {
   getWorkspaceCapabilities,
   getWorkspaceMembers,
 } from "@/lib/data";
+import { getServerTranslations } from "@/lib/i18n-server";
 import { requireWorkspace, type WorkspaceSearchParams } from "@/lib/workspace";
 
 type ProjectsPageProps = { searchParams: WorkspaceSearchParams };
@@ -20,6 +21,7 @@ type ProjectsPageProps = { searchParams: WorkspaceSearchParams };
 export default async function ProjectsPage({
   searchParams,
 }: ProjectsPageProps) {
+  const { t } = await getServerTranslations();
   const workspace = await requireWorkspace(searchParams);
   const capabilities = await getWorkspaceCapabilities(workspace.id);
   const [projects, members] = await Promise.all([
@@ -43,11 +45,13 @@ export default async function ProjectsPage({
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-10">
       <header>
         <p className="mb-2 text-sm text-secondary">
-          {workspace.name} / Projects
+          {workspace.name} / {t("Projects")}
         </p>
-        <h1 className="text-3xl font-semibold tracking-tight">Projects</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {t("Projects")}
+        </h1>
         <p className="mt-2 text-sm text-secondary">
-          Keep every initiative moving forward.
+          {t("Keep every initiative moving forward.")}
         </p>
         {capabilities.canManageProjects && (
           <div className="mt-5">
@@ -81,20 +85,21 @@ export default async function ProjectsPage({
                         : "success"
                   }
                 >
-                  {project.status}
+                  {t(project.status)}
                 </Badge>
               </CardHeader>
               <CardContent>
                 <Progress
                   value={project.progress}
-                  label={`${project.name} completion`}
+                  label={t("{{name}} completion", { name: project.name })}
                 />
                 <div className="mt-4 flex items-center justify-between text-xs text-secondary">
                   <span>
-                    {project.tasks.completed} of {project.tasks.total} tasks
+                    {project.tasks.completed} {t("of")} {project.tasks.total}{" "}
+                    {t("tasks")}
                   </span>
                   <span className="font-medium transition-colors duration-120 group-hover:text-accent">
-                    View details →
+                    {t("View details")} →
                   </span>
                 </div>
               </CardContent>
@@ -104,10 +109,10 @@ export default async function ProjectsPage({
         {projects.length === 0 && (
           <div className="rounded-xl border border-dashed border-border-strong px-6 py-12 text-center lg:col-span-3">
             <p className="text-sm font-medium text-primary">
-              No projects in this workspace yet.
+              {t("No projects in this workspace yet.")}
             </p>
             <p className="mt-1 text-sm text-secondary">
-              Create a project to give your team a shared place to work.
+              {t("Create a project to give your team a shared place to work.")}
             </p>
           </div>
         )}

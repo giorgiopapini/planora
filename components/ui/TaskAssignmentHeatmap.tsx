@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslation } from "@/components/LocaleProvider";
 import { Avatar } from "./Avatar";
 
 export type HeatmapDay = {
@@ -34,6 +37,7 @@ export function TaskAssignmentHeatmap({
   maxAssignments,
   className = "",
 }: TaskAssignmentHeatmapProps) {
+  const { t } = useTranslation();
   const highestAssignment = Math.max(
     1,
     maxAssignments ?? 0,
@@ -51,27 +55,30 @@ export function TaskAssignmentHeatmap({
   return (
     <section
       className={`overflow-hidden rounded-xl border border-border bg-surface ${className}`}
-      aria-label="Task assignments by team member"
+      aria-label={t("Task assignments by team member")}
     >
       <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border px-4 py-4 sm:px-6">
         <div>
           <h2 className="text-base font-semibold text-primary">
-            Task assignments
+            {t("Task assignments")}
           </h2>
           <p className="mt-1 text-sm leading-6 text-secondary">
-            Daily workload by team member
+            {t("Daily workload by team member")}
           </p>
         </div>
         <div className="text-right">
           <p className="text-xl font-semibold text-primary">
             {totalAssignments.toLocaleString("en-US")}
           </p>
-          <p className="text-xs text-secondary">assigned this period</p>
+          <p className="text-xs text-secondary">{t("assigned this period")}</p>
         </div>
       </header>
 
       <div className="overflow-x-auto">
-        <table className="min-w-[680px] w-full border-collapse" aria-label="Task assignments by day">
+        <table
+          className="min-w-[680px] w-full border-collapse"
+          aria-label={t("Task assignments by day")}
+        >
           <caption className="sr-only">
             Number of assigned tasks for each team member by day
           </caption>
@@ -81,7 +88,7 @@ export function TaskAssignmentHeatmap({
                 scope="col"
                 className="sticky left-0 z-10 min-w-[190px] border-r border-border bg-subtle px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-secondary sm:min-w-[220px] sm:px-6"
               >
-                Team member
+                {t("Team member")}
               </th>
               {days.map((day) => {
                 const date = toDate(day.date);
@@ -104,7 +111,7 @@ export function TaskAssignmentHeatmap({
                 scope="col"
                 className="min-w-[86px] border-l border-border px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-secondary"
               >
-                Total
+                {t("Total")}
               </th>
             </tr>
           </thead>
@@ -114,7 +121,10 @@ export function TaskAssignmentHeatmap({
               const capacity = user.capacity;
               const overloaded = capacity !== undefined && total > capacity;
               return (
-                <tr key={user.id} className="border-b border-border last:border-b-0">
+                <tr
+                  key={user.id}
+                  className="border-b border-border last:border-b-0"
+                >
                   <th
                     scope="row"
                     className="sticky left-0 z-[1] min-w-[190px] border-r border-border bg-surface px-4 py-3 text-left sm:min-w-[220px] sm:px-6"
@@ -165,13 +175,16 @@ export function TaskAssignmentHeatmap({
 
       {users.length === 0 && (
         <p className="px-6 py-8 text-center text-sm text-secondary">
-          No team members to display.
+          {t("No team members to display.")}
         </p>
       )}
 
       <footer className="flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-border px-4 py-3 text-xs text-secondary sm:px-6">
-        <span className="font-medium text-primary">Tasks per day</span>
-        <div className="flex items-center gap-1.5" aria-label="Assignment intensity scale from zero to high">
+        <span className="font-medium text-primary">{t("Tasks per day")}</span>
+        <div
+          className="flex items-center gap-1.5"
+          aria-label={t("Assignment intensity scale from zero to high")}
+        >
           {intensityClasses.map((color, index) => (
             <span
               key={color}
@@ -181,11 +194,12 @@ export function TaskAssignmentHeatmap({
             />
           ))}
         </div>
-        <span>Low</span>
-        <span>High</span>
+        <span>{t("Low")}</span>
+        <span>{t("High")}</span>
         {overloadedUsers.length > 0 && (
           <span className="ml-auto text-danger">
-            {overloadedUsers.length} member{overloadedUsers.length === 1 ? "" : "s"} over capacity
+            {overloadedUsers.length} member
+            {overloadedUsers.length === 1 ? "" : "s"} over capacity
           </span>
         )}
       </footer>
@@ -202,9 +216,13 @@ function HeatmapCell({
   highestAssignment: number;
   label: string;
 }) {
-  const intensity = assignments === 0
-    ? 0
-    : Math.min(5, Math.max(1, Math.ceil((assignments / highestAssignment) * 5)));
+  const intensity =
+    assignments === 0
+      ? 0
+      : Math.min(
+          5,
+          Math.max(1, Math.ceil((assignments / highestAssignment) * 5)),
+        );
   return (
     <span
       className={`flex h-9 w-full min-w-10 items-center justify-center rounded-[4px] text-xs font-semibold transition-colors ${intensityClasses[intensity]}`}
@@ -218,7 +236,8 @@ function HeatmapCell({
 }
 
 function toDate(value: Date | string) {
-  const date = value instanceof Date ? new Date(value) : new Date(`${value}T00:00:00`);
+  const date =
+    value instanceof Date ? new Date(value) : new Date(`${value}T00:00:00`);
   date.setHours(0, 0, 0, 0);
   return date;
 }

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useTranslation } from "@/components/LocaleProvider";
 import { Button, Card, CardContent, Input } from "@/components/ui";
 
 type AuthMode = "signin" | "signup";
@@ -24,8 +26,9 @@ export function AuthForm({
   const supabase = createClient();
   const togglePasswordVisibility = () => setShowPassword((visible) => !visible);
   const isSignUp = mode === "signup";
-  const title = isSignUp ? "Create your account" : "Welcome back";
-  const actionLabel = isSignUp ? "Sign up" : "Sign in";
+  const { t } = useTranslation();
+  const title = isSignUp ? t("Create your account") : t("Welcome back");
+  const actionLabel = isSignUp ? t("Sign up") : t("Sign in");
   const redirectPath =
     nextPath?.startsWith("/") && !nextPath.startsWith("//")
       ? nextPath
@@ -44,6 +47,9 @@ export function AuthForm({
       <Card className="w-full max-w-md">
         <CardContent className="p-6 sm:p-8">
           <div className="mb-8 text-center">
+            <div className="mb-4 flex justify-end">
+              <LanguageToggle />
+            </div>
             <Link
               href="/landing"
               className="text-4xl font-semibold tracking-tight hover:text-accent"
@@ -55,8 +61,8 @@ export function AuthForm({
             </h1>
             <p className="mt-2 text-sm text-secondary">
               {isSignUp
-                ? "Start organizing your work with Planora."
-                : "Sign in to continue to your workspace."}
+                ? t("Start organizing your work with Planora.")
+                : t("Sign in to continue to your workspace.")}
             </p>
           </div>
 
@@ -98,7 +104,9 @@ export function AuthForm({
               }
               if (isSignUp && !result.data.session) {
                 setSuccessMessage(
-                  "Account created. Check your email to confirm your address.",
+                  t(
+                    "Account created. Check your email to confirm your address.",
+                  ),
                 );
                 return;
               }
@@ -110,7 +118,7 @@ export function AuthForm({
               <Input
                 id="full-name"
                 name="fullName"
-                label="Full name"
+                label={t("Full name")}
                 placeholder="Alex Morgan"
                 autoComplete="name"
                 required
@@ -120,7 +128,7 @@ export function AuthForm({
               id="email"
               name="email"
               type="email"
-              label="Email"
+              label={t("Email")}
               placeholder="you@example.com"
               autoComplete="email"
               required
@@ -130,8 +138,8 @@ export function AuthForm({
                 id="password"
                 name="password"
                 type={showPassword ? "text" : "password"}
-                label="Password"
-                placeholder="Enter your password"
+                label={t("Password")}
+                placeholder={t("Enter your password")}
                 autoComplete={isSignUp ? "new-password" : "current-password"}
                 className="pr-20"
                 required
@@ -140,7 +148,9 @@ export function AuthForm({
                 type="button"
                 onClick={togglePasswordVisibility}
                 className="absolute right-2 top-[29px] z-10 inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-secondary hover:bg-muted hover:text-primary"
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={
+                  showPassword ? t("Hide password") : t("Show password")
+                }
               >
                 {showPassword ? <EyeOffIcon /> : <EyeIcon />}
               </button>
@@ -151,8 +161,8 @@ export function AuthForm({
                   id="password-confirmation"
                   name="passwordConfirmation"
                   type={showPassword ? "text" : "password"}
-                  label="Confirm password"
-                  placeholder="Re-enter your password"
+                  label={t("Confirm password")}
+                  placeholder={t("Re-enter your password")}
                   autoComplete="new-password"
                   className={passwordMismatch ? "border-danger pr-20" : "pr-20"}
                   required
@@ -161,13 +171,15 @@ export function AuthForm({
                   type="button"
                   onClick={togglePasswordVisibility}
                   className="absolute right-2 top-[29px] z-10 inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-secondary hover:bg-muted hover:text-primary"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={
+                    showPassword ? t("Hide password") : t("Show password")
+                  }
                 >
                   {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
                 {passwordMismatch && (
                   <p className="mt-1.5 text-xs text-danger" role="alert">
-                    Passwords do not match.
+                    {t("Passwords do not match.")}
                   </p>
                 )}
               </div>
@@ -188,7 +200,7 @@ export function AuthForm({
               className="w-full"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Please wait…" : actionLabel}
+              {isSubmitting ? t("Please wait…") : actionLabel}
             </Button>
           </form>
 
@@ -197,7 +209,7 @@ export function AuthForm({
               href={alternateHref}
               className="font-medium text-accent hover:text-accent-hover"
             >
-              {alternateLabel}
+              {t(alternateLabel)}
             </Link>
           </p>
         </CardContent>

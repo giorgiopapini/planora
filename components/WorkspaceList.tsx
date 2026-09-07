@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "@/components/LocaleProvider";
 import { useRouter } from "next/navigation";
 import { createWorkspace } from "@/app/actions";
 import { Button, Input, Modal } from "@/components/ui";
@@ -22,6 +23,7 @@ export function WorkspaceList({
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+  const { t } = useTranslation();
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -37,14 +39,14 @@ export function WorkspaceList({
       setError(
         actionError instanceof Error
           ? actionError.message
-          : "Workspace could not be created.",
+          : t("Workspace could not be created."),
       );
     }
   }
 
   return (
     <>
-      <div className="space-y-3" aria-label="Your workspaces">
+      <div className="space-y-3" aria-label={t("Your workspaces")}>
         {workspaces.map((workspace) => (
           <a
             key={workspace.id}
@@ -59,7 +61,7 @@ export function WorkspaceList({
         ))}
         {workspaces.length === 0 && (
           <p className="rounded-lg border border-dashed border-border-strong px-4 py-6 text-center text-sm text-secondary">
-            You do not belong to a workspace yet.
+            {t("You do not belong to a workspace yet.")}
           </p>
         )}
       </div>
@@ -69,13 +71,13 @@ export function WorkspaceList({
           onClick={() => setIsOpen(true)}
           className="cursor-pointer font-medium text-accent hover:text-accent-hover"
         >
-          Create a new workspace
+          {t("Create a new workspace")}
         </button>
       </p>
       <Modal
         open={isOpen}
-        title="Create a new workspace"
-        description="Give your new workspace a name to get started."
+        title={t("Create a new workspace")}
+        description={t("Give your new workspace a name to get started.")}
         onClose={() => {
           setIsOpen(false);
           setName("");
@@ -85,7 +87,7 @@ export function WorkspaceList({
         <form className="space-y-5" onSubmit={submit}>
           <Input
             id="workspace-name"
-            label="Workspace name"
+            label={t("Workspace name")}
             placeholder="e.g. Product Development"
             value={name}
             onChange={(event) => setName(event.target.value)}
@@ -107,9 +109,9 @@ export function WorkspaceList({
                 setError("");
               }}
             >
-              Cancel
+              {t("Cancel")}
             </Button>
-            <Button type="submit">Create workspace</Button>
+            <Button type="submit">{t("Create workspace")}</Button>
           </div>
         </form>
       </Modal>

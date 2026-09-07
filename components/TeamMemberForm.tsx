@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "@/components/LocaleProvider";
 import {
   createWorkspaceRole,
   deleteWorkspaceRole,
@@ -66,6 +67,7 @@ export function TeamMemberForm({
   canManageMembers: boolean;
   canManageRoles: boolean;
 }) {
+  const { t } = useTranslation();
   const [members, setMembers] = useState(initialMembers);
   const [pendingInvitations, setPendingInvitations] =
     useState(initialInvitations);
@@ -110,28 +112,28 @@ export function TeamMemberForm({
     setRoleError(
       actionError instanceof Error
         ? actionError.message
-        : "The change could not be saved.",
+        : t("The change could not be saved."),
     );
   }
   function showInviteError(actionError: unknown) {
     setInviteError(
       actionError instanceof Error
         ? actionError.message
-        : "The change could not be saved.",
+        : t("The change could not be saved."),
     );
   }
   function showMemberRoleError(actionError: unknown) {
     setMemberRoleError(
       actionError instanceof Error
         ? actionError.message
-        : "The change could not be saved.",
+        : t("The change could not be saved."),
     );
   }
   function showRemoveError(actionError: unknown) {
     setRemoveError(
       actionError instanceof Error
         ? actionError.message
-        : "The change could not be saved.",
+        : t("The change could not be saved."),
     );
   }
 
@@ -151,7 +153,7 @@ export function TeamMemberForm({
           roleId: invitation.roleId,
           role:
             roles.find((item) => item.id === invitation.roleId)?.name ||
-            "Unknown",
+            t("Unknown"),
           permissionKey:
             roles.find((item) => item.id === invitation.roleId)
               ?.permissionKey || "normal_user",
@@ -303,16 +305,16 @@ export function TeamMemberForm({
         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border p-6">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-semibold">Team members</h2>
+              <h2 className="text-base font-semibold">{t("Team members")}</h2>
               <Badge variant="count">
                 {members.length + pendingInvitations.length}{" "}
                 {members.length + pendingInvitations.length === 1
-                  ? "member"
-                  : "members"}
+                  ? t("team member")
+                  : t("team members")}
               </Badge>
             </div>
             <p className="mt-1 text-sm leading-6 text-secondary">
-              Manage access and responsibilities from one place.
+              {t("Manage access and responsibilities from one place.")}
             </p>
           </div>
           {(canManageMembers || canManageRoles) && (
@@ -327,7 +329,7 @@ export function TeamMemberForm({
                     setInviteError("");
                   }}
                 >
-                  Add Member
+                  {t("Add Member")}
                 </Button>
               )}
               {canManageRoles && (
@@ -340,7 +342,7 @@ export function TeamMemberForm({
                     setRoleError("");
                   }}
                 >
-                  Handle Roles
+                  {t("Handle Roles")}
                 </Button>
               )}
             </div>
@@ -395,7 +397,7 @@ export function TeamMemberForm({
                   {invitation.email}
                 </p>
                 <div className="mt-1 flex items-center gap-2">
-                  <Badge variant="warning">Pending</Badge>
+                  <Badge variant="warning">{t("Pending")}</Badge>
                   <span className="truncate text-xs text-tertiary">
                     {invitation.role}
                   </span>
@@ -417,8 +419,8 @@ export function TeamMemberForm({
       {canManageMembers && (
         <Modal
           open={open}
-          title="Add a team member"
-          description="Invite someone to collaborate in your workspace."
+          title={t("Add a team member")}
+          description={t("Invite someone to collaborate in your workspace.")}
           onClose={() => {
             setOpen(false);
             setInviteError("");
@@ -427,7 +429,7 @@ export function TeamMemberForm({
           <form className="space-y-5" onSubmit={addMember}>
             <Input
               id="member-email"
-              label="User email"
+              label={t("User email")}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               type="email"
@@ -449,8 +451,9 @@ export function TeamMemberForm({
               ))}
             </Select>
             <p className="text-xs text-secondary">
-              An invitation will be created for this email. Access begins after
-              the invitation is accepted.
+              {t(
+                "An invitation will be created for this email. Access begins after the invitation is accepted.",
+              )}
             </p>
             {inviteError && (
               <p className="text-sm text-danger" role="alert">
@@ -463,10 +466,10 @@ export function TeamMemberForm({
                 variant="ghost"
                 onClick={() => setOpen(false)}
               >
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" disabled={!roleId}>
-                Send invitation
+                {t("Send invitation")}
               </Button>
             </div>
           </form>
@@ -476,8 +479,8 @@ export function TeamMemberForm({
       {canManageRoles && (
         <Modal
           open={rolesOpen}
-          title="Handle roles"
-          description="Create, rename, or remove workspace roles."
+          title={t("Handle roles")}
+          description={t("Create, rename, or remove workspace roles.")}
           onClose={() => {
             setRolesOpen(false);
             setEditingRole(null);
@@ -493,7 +496,7 @@ export function TeamMemberForm({
             <div className="grid items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(180px,auto)_auto]">
               <Input
                 id="new-role"
-                label="New role"
+                label={t("New role")}
                 value={newRole}
                 onChange={(event) => {
                   setNewRole(event.target.value);
@@ -504,18 +507,18 @@ export function TeamMemberForm({
               />
               <Select
                 id="new-role-permission"
-                label="Permission"
+                label={t("Permission")}
                 value={permissionKey}
                 onChange={(event) =>
                   setPermissionKey(event.target.value as PermissionKey)
                 }
               >
-                <option value="owner_like">Owner-like</option>
-                <option value="project_manager">Project manager</option>
-                <option value="normal_user">Normal user</option>
+                <option value="owner_like">{t("Owner-like")}</option>
+                <option value="project_manager">{t("Project manager")}</option>
+                <option value="normal_user">{t("Normal user")}</option>
               </Select>
               <Button type="button" onClick={addRole}>
-                Add
+                {t("Add")}
               </Button>
             </div>
             <div className="divide-y divide-border rounded-lg border border-border">
@@ -587,8 +590,12 @@ export function TeamMemberForm({
       {canManageMembers && (
         <Modal
           open={Boolean(editingMember)}
-          title={`Edit ${editingMember?.name || "team member"}`}
-          description="Update this team member's workspace role."
+          title={
+            editingMember
+              ? `${t("Edit")} ${editingMember.name}`
+              : t("Edit team member")
+          }
+          description={t("Update this team member's workspace role.")}
           onClose={() => {
             setEditingMember(null);
             setMemberRoleError("");
@@ -598,7 +605,7 @@ export function TeamMemberForm({
             <div className="space-y-5">
               <Select
                 id="edit-member-role"
-                label="Workspace role"
+                label={t("Workspace role")}
                 autoFocus
                 value={editingMember.roleId}
                 onChange={(event) => saveMemberRole(event.target.value)}
@@ -620,7 +627,7 @@ export function TeamMemberForm({
                   variant="secondary"
                   onClick={() => setEditingMember(null)}
                 >
-                  Cancel
+                  {t("Cancel")}
                 </Button>
               </div>
             </div>
@@ -631,8 +638,8 @@ export function TeamMemberForm({
       {canManageMembers && (
         <Modal
           open={Boolean(memberToDelete)}
-          title="Remove team member?"
-          description={`Remove ${memberToDelete?.name || "this member"} from the workspace?`}
+          title={t("Remove team member?")}
+          description={`${t("Remove")} ${memberToDelete?.name || t("this member")} ${t("from the workspace?")}`}
           onClose={() => {
             setMemberToDelete(null);
             setRemoveError("");
@@ -650,10 +657,10 @@ export function TeamMemberForm({
                 variant="ghost"
                 onClick={() => setMemberToDelete(null)}
               >
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="button" variant="danger" onClick={deleteMember}>
-                Remove member
+                {t("Remove team member")}
               </Button>
             </div>
           </div>
@@ -663,8 +670,8 @@ export function TeamMemberForm({
       {canManageMembers && (
         <Modal
           open={Boolean(invitationToDelete)}
-          title="Dismiss invitation?"
-          description={`Remove the pending invitation for ${invitationToDelete?.email || "this email"}?`}
+          title={t("Dismiss invitation?")}
+          description={`${t("Remove the pending invitation for")} ${invitationToDelete?.email || t("this email")}?`}
           onClose={() => {
             setInvitationToDelete(null);
             setInvitationRemoveError("");
@@ -682,10 +689,10 @@ export function TeamMemberForm({
                 variant="ghost"
                 onClick={() => setInvitationToDelete(null)}
               >
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="button" variant="danger" onClick={deleteInvitation}>
-                Dismiss invitation
+                {t("Dismiss invitation")}
               </Button>
             </div>
           </div>
