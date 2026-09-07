@@ -293,13 +293,7 @@ The project workspace is the main operational page for a project.
 **Add a screenshot here**
 
 ```md
-![Planora project workspace](docs/screenshots/project-workspace.png)
-```
-
-You can add additional images for the individual views:
-
-```md
-![Project task list](docs/screenshots/project-task-list.png)
+![Project task list](docs/screenshots/project-workspace.png)
 ![Project Gantt view](docs/screenshots/project-gantt.png)
 ![Project calendar view](docs/screenshots/project-calendar.png)
 ![Project Kanban view](docs/screenshots/project-kanban.png)
@@ -334,23 +328,11 @@ Invitation links open this page.
 - The server action validates the token, expiration, and authenticated email before creating or reactivating membership.
 - A missing token produces an explicit error state.
 
-**Add a screenshot here**
-
-```md
-![Planora invitation acceptance](docs/screenshots/accept-invitation.png)
-```
-
 ### 10. Component gallery — `/dev`
 
 `/dev` is a local visual reference for reusable UI components. It uses local preview data and is not part of the authenticated product flow.
 
 It demonstrates buttons, badges, form controls, avatars, progress bars, dashboard cards, Kanban, project details, calendar, Gantt, heatmap, status visualizations, and activity-list patterns.
-
-**Add a screenshot here**
-
-```md
-![Planora component gallery](docs/screenshots/dev-components.png)
-```
 
 ---
 
