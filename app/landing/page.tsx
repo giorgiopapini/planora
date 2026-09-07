@@ -247,7 +247,7 @@ export default async function LandingPage() {
             <Link href="/signup" className="relative mt-8 inline-flex">
               <Button
                 size="lg"
-                className="bg-white text-tint-900 hover:bg-tint-100"
+                className="bg-tint-700 text-white hover:bg-tint-500"
               >
                 {t("Get started for free")}
               </Button>
