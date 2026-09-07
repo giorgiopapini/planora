@@ -296,8 +296,8 @@ const english = {
   "Calm project management for busy teams":
     "Calm project management for busy teams",
   "Make progress feel lighter.": "Make progress feel lighter.",
-  "Planora brings projects, priorities, and people into one clear workspace—so your team always knows what matters next.":
-    "Planora brings projects, priorities, and people into one clear workspace—so your team always knows what matters next.",
+  "Planora brings projects, priorities, and people into one clear workspace, so your team always knows what matters next.":
+    "Planora brings projects, priorities, and people into one clear workspace, so your team always knows what matters next.",
   "Start planning for free": "Start planning for free",
   "See how it works": "See how it works",
   "Designed for teams who want less noise":
@@ -635,8 +635,8 @@ const italian: Record<MessageKey, string> = {
   "Calm project management for busy teams":
     "Gestione progetti serena per team impegnati",
   "Make progress feel lighter.": "Rendi i progressi più leggeri.",
-  "Planora brings projects, priorities, and people into one clear workspace—so your team always knows what matters next.":
-    "Planora riunisce progetti, priorità e persone in un unico spazio di lavoro chiaro—così il tuo team sa sempre su cosa concentrarsi dopo.",
+  "Planora brings projects, priorities, and people into one clear workspace, so your team always knows what matters next.":
+    "Planora riunisce progetti, priorità e persone in un unico spazio di lavoro chiaro, così il tuo team sa sempre su cosa concentrarsi dopo.",
   "Start planning for free": "Inizia a pianificare gratis",
   "See how it works": "Scopri come funziona",
   "Designed for teams who want less noise":

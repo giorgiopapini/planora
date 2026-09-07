@@ -41,19 +41,15 @@ export default async function LandingPage() {
         />
         <div className="mx-auto grid max-w-7xl items-center gap-14 px-4 pb-20 pt-16 sm:px-6 sm:pt-24 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:px-10 lg:pb-28 lg:pt-28">
           <div className="max-w-xl">
-            <Badge variant="success" className="gap-2">
-              <span
-                className="h-1.5 w-1.5 rounded-full bg-accent"
-                aria-hidden="true"
-              />
+            <p className="text-sm font-medium text-accent">
               {t("Calm project management for busy teams")}
-            </Badge>
+            </p>
             <h1 className="mt-6 text-4xl font-semibold leading-[1.08] tracking-[-0.04em] sm:text-6xl lg:text-[4.25rem]">
               {t("Make progress feel lighter.")}
             </h1>
             <p className="mt-6 max-w-lg text-base leading-7 text-secondary sm:text-lg sm:leading-8">
               {t(
-                "Planora brings projects, priorities, and people into one clear workspace—so your team always knows what matters next.",
+                "Planora brings projects, priorities, and people into one clear workspace, so your team always knows what matters next.",
               )}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -150,7 +146,9 @@ export default async function LandingPage() {
       <section className="bg-surface px-4 py-24 sm:px-6 lg:px-10 lg:py-32">
         <div className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
           <div>
-            <Badge variant="success">{t("Projects, in context")}</Badge>
+            <p className="text-sm font-medium text-accent">
+              {t("Projects, in context")}
+            </p>
             <h2 className="mt-5 max-w-lg text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
               {t("Move from “what’s happening?” to “here’s what’s next.”")}
             </h2>
