@@ -130,7 +130,11 @@ The public entry point introduces Planora and does not require authentication.
 - The `Product` and `Why Planora` links scroll to sections on the same page.
 - The preview is illustrative and does not query the database.
 
+**Add a screenshot here**
+
+```md
 ![Planora landing page](docs/screenshots/landing-page.png)
+```
 
 **HTML-style product description**
 
@@ -167,7 +171,11 @@ The sign-up page creates a Supabase Auth account.
 
 The form includes password visibility toggles, client-side password matching, loading feedback, translated labels, and error/status messages.
 
+**Add a screenshot here**
+
+```md
 ![Planora sign-up page](docs/screenshots/sign-up.png)
+```
 
 ### 3. Sign-in page — `/signin`
 
@@ -181,7 +189,11 @@ The sign-in page authenticates an existing user with Supabase.
 4. On success, the user is sent to `/workspaces` or a safe relative `next` path.
 5. Authenticated users visiting this page are redirected to `/workspaces`.
 
+**Add a screenshot here**
+
+```md
 ![Planora sign-in page](docs/screenshots/sign-in.png)
+```
 
 ### 4. Workspace selector — `/workspaces`
 
@@ -198,7 +210,9 @@ Selecting a workspace sends the user into the application with the workspace ide
 
 **Add a screenshot here**
 
+```md
 ![Planora workspace selector](docs/screenshots/workspaces.png)
+```
 
 ### 5. Overview dashboard — `/overview?workspace=<workspace-id>`
 
@@ -221,7 +235,9 @@ The page resolves the selected workspace with `requireWorkspace`, checks capabil
 
 **Add a screenshot here**
 
+```md
 ![Planora overview dashboard](docs/screenshots/overview.png)
+```
 
 ### 6. Projects directory — `/projects?workspace=<workspace-id>`
 
@@ -236,7 +252,11 @@ The projects page lists active projects in the selected workspace.
 
 Selecting a card opens the project detail page while preserving the workspace query parameter.
 
+**Add a screenshot here**
+
+```md
 ![Planora projects directory](docs/screenshots/projects.png)
+```
 
 ### 7. Project workspace — `/projects/<project-slug>?workspace=<workspace-id>`
 
@@ -270,10 +290,14 @@ The project workspace is the main operational page for a project.
 | Calendar | Displays task intervals and due dates in a calendar layout. |
 | Kanban | Groups tasks by workflow status and supports drag-and-drop status updates. |
 
+**Add a screenshot here**
+
+```md
 ![Project task list](docs/screenshots/project-workspace.png)
 ![Project Gantt view](docs/screenshots/project-gantt.png)
 ![Project calendar view](docs/screenshots/project-calendar.png)
 ![Project Kanban view](docs/screenshots/project-kanban.png)
+```
 
 ### 8. Team page — `/team?workspace=<workspace-id>`
 
@@ -289,7 +313,11 @@ The team page manages workspace collaboration and shows assignment distribution.
 
 Permission-sensitive controls are hidden or restricted when the current user cannot manage members or roles.
 
+**Add a screenshot here**
+
+```md
 ![Planora team management](docs/screenshots/team.png)
+```
 
 ### 9. Invitation acceptance — `/accept-invitation?token=<token>`
 
@@ -313,415 +341,95 @@ It demonstrates buttons, badges, form controls, avatars, progress bars, dashboar
 | Route | Access | Purpose |
 | --- | --- | --- |
 | `/` | Public | Redirects to `/landing` or `/workspaces` based on auth state. |
-| `/landing` | Public | Product marketing and feature overview. |
-| `/signin` | Public | Sign in with Supabase Auth. |
-| `/signup` | Public | Create a Supabase Auth account. |
+| `/landing` | Public | Product marketing page. |
+| `/signin` · `/signup` | Public | Supabase Auth. |
 | `/accept-invitation` | Mixed | Accept a workspace invitation after authentication. |
 | `/workspaces` | Authenticated | Select or create a workspace. |
-| `/overview` | Authenticated workspace member | Workspace dashboard. |
-| `/projects` | Authenticated workspace member | Project directory and project creation. |
-| `/projects/[projectId]` | Authenticated workspace member | Project details and task workspace. |
-| `/team` | Authenticated workspace member | Members, roles, invitations, and assignment heatmap. |
-| `/dev` | Public local preview | UI component gallery using local data. |
+| `/overview` | Member | Workspace dashboard. |
+| `/projects` | Member | Project directory and creation. |
+| `/projects/[projectId]` | Member | Project details and task workspace. |
+| `/team` | Member | Members, roles, invitations, heatmap. |
+| `/dev` | Public | Component gallery (local data). |
 
-The authenticated pages are wrapped by `app/(private)/(app)/layout.tsx`, which verifies the Supabase user and renders the shared `AppNav`.
+## Stack
 
----
-
-## Data and permission model
-
-Supabase PostgreSQL stores the application data. The schema is centered on these tables:
-
-- `profiles`
-- `workspaces`
-- `workspace_roles`
-- `workspace_members`
-- `workspace_invitations`
-- `projects`
-- `project_members`
-- `workflow_statuses`
-- `tasks`
-- `task_assignees`
-- `task_status_history`
-- `tags`
-- `task_tags`
-- `milestones`
-- `activity_events`
-- `sprints`, `sprint_tasks`, and `member_capacity` for capacity-related features
-
-Row-level security is enabled for application tables. Workspace access is checked using active membership, while capability helpers distinguish between:
-
-- `owner_like` — workspace ownership, member/role management, project and task management, and workspace deletion.
-- `project_manager` — project-scoped management, project and task operations, and limited member management according to the migration rules.
-- `normal_user` — visibility according to assignment/project membership and status updates on permitted tasks.
-
-Important authorization rules are implemented twice where appropriate: in application-side capability checks and in database policies/functions. Never rely only on a workspace name, project slug, or query parameter as an authorization boundary.
-
----
-
-## Technology stack
-
-- **Next.js 16.3.3** with the App Router.
-- **React 19.2.8** and React DOM.
-- **TypeScript 5** with strict checking and the `@/*` path alias.
-- **Supabase JS 2.112.4** for database and authentication access.
-- **`@supabase/ssr` 0.12.5** for browser/server clients and cookie-based sessions.
-- **Resend 6.25.0** for workspace invitation email delivery.
-- **Tailwind CSS 4** through the PostCSS integration.
-- **ESLint 9** with the Next.js Core Web Vitals and TypeScript configurations.
-- **Inter** loaded with `next/font/google`.
-
-The repository uses `npm` and includes `package-lock.json`; use `npm`, not a different package manager, for reproducible installs.
-
----
+- Next.js 16 (App Router), React 19, TypeScript 5 (strict, `@/*` alias)
+- Supabase JS 2 + `@supabase/ssr` for database, auth, and cookie sessions
+- Tailwind CSS 4, Resend for invitation email, ESLint 9, Inter via `next/font`
 
 ## Project structure
 
 ```text
-.
-├── app/
-│   ├── landing/                 # Public marketing page
-│   ├── signin/                  # Sign-in page
-│   ├── signup/                  # Sign-up page
-│   ├── accept-invitation/       # Invitation acceptance
-│   ├── (private)/
-│   │   ├── page.tsx             # Auth-aware root redirect
-│   │   ├── workspaces/           # Workspace selector
-│   │   └── (app)/
-│   │       ├── layout.tsx       # Authenticated shell and navigation
-│   │       ├── overview/        # Dashboard
-│   │       ├── projects/        # Project directory and details
-│   │       └── team/            # Team management
-│   ├── dev/                     # Component gallery
-│   ├── actions.ts               # Server actions for mutations
-│   ├── globals.css              # Tailwind theme tokens and global styles
-│   └── layout.tsx               # Root metadata, font, locale provider
-├── components/
-│   ├── ui/                      # Reusable UI primitives and visualizations
-│   ├── AppNav.tsx               # Authenticated navigation and user menu
-│   ├── AuthForm.tsx             # Shared sign-in/sign-up form
-│   ├── ProjectWorkspace.tsx     # Project and task interaction surface
-│   ├── TeamMemberForm.tsx       # Members, invitations, and roles
-│   └── ...
-├── hooks/                       # Client hooks such as current-user state
-├── lib/
-│   ├── data.ts                  # Server-side data queries and mapping
-│   ├── workspace.ts             # Workspace resolution and access context
-│   ├── i18n.ts                  # English/Italian dictionaries
-│   ├── i18n-server.ts           # Server translation helpers
-│   ├── resend.ts                # Resend invitation email client
-│   └── supabase/                # Browser and server Supabase clients
-├── supabase/migrations/         # Ordered PostgreSQL migrations and RPCs
-├── SQL.txt                     # Full schema/setup SQL reference
-├── DB_SCHEMA.md                 # Proposed schema documentation
-├── ACTUAL_DB_SCHEME.md          # Actual schema reference
-├── DESIGN.md                    # UI/UX and accessibility rules
-├── proxy.ts                     # Supabase session refresh proxy
-├── package.json                 # Scripts and dependencies
-└── tsconfig.json                # TypeScript configuration
+app/
+  landing/ signin/ signup/ accept-invitation/ dev/
+  (private)/workspaces/
+  (private)/(app)/layout.tsx    # authenticated shell + nav
+  (private)/(app)/overview/ projects/ team/
+  actions.ts                    # server actions
+components/ui/                  # reusable primitives
+components/                     # AppNav, AuthForm, ProjectWorkspace, TeamMemberForm...
+hooks/                          # client hooks (current user, etc.)
+lib/                            # data.ts, workspace.ts, i18n.ts, resend.ts, supabase/
+supabase/migrations/            # ordered PostgreSQL migrations
+SQL.txt, DB_SCHEMA.md, ACTUAL_DB_SCHEME.md, DESIGN.md
 ```
 
----
+## Getting started
 
-## Requirements
-
-Before installing, have the following available:
-
-- Node.js compatible with the installed Next.js version.
-- npm.
-- A Supabase project.
-- A Resend account and API key if workspace invitation emails are required.
-- A Git client if downloading through Git.
-
-No separate frontend database server is required; Planora connects to Supabase through its URL and public anonymous key.
-
----
-
-## Installation
-
-### 1. Download the codebase
-
-Clone the repository and enter its directory:
+### 1. Install
 
 ```bash
 git clone <YOUR_REPOSITORY_URL> planora
 cd planora
-```
-
-Alternatively, download the repository archive from your Git provider, extract it, and open a terminal in the extracted project directory.
-
-### 2. Install dependencies
-
-```bash
 npm install
 ```
 
-This uses the committed `package-lock.json` to install the Next.js, React, Supabase, Resend, Tailwind, TypeScript, and ESLint dependencies.
+Requires Node.js (compatible with the installed Next.js version) and npm. Use npm — the repo ships a `package-lock.json`.
 
-### 3. Create the local environment file
+### 2. Configure environment
 
-Create a file named `.env.local` in the project root. Do not commit it. The repository ignores `.env*` files by default.
+Create `.env.local` in the project root (never commit it):
 
-```bash
-touch .env.local
-```
-
-Add the variables described in the next section.
-
-### 4. Configure Supabase
-
-Create or select a Supabase project, copy its project URL and public anonymous key, then place them in `.env.local`. Apply the database schema and migrations as described in [Supabase setup](#supabase-setup).
-
-### 5. Configure Resend if invitations are needed
-
-Create a Resend API key and add it to `.env.local`. You may use the default Resend testing sender during development, or configure a verified sending domain and set `RESEND_FROM_EMAIL`.
-
-### 6. Start the development server
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
----
-
-## Environment variables
-
-The application reads the following variables:
-
-| Variable | Required | Where it is used | Example |
-| --- | --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Browser client, server client, and session proxy. | `https://your-project.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Browser client, server client, and session proxy. | `your-public-anon-key` |
-| `RESEND_API_KEY` | For invitation email | Server-only Resend client in `lib/resend.ts`. | `re_xxxxxxxxx` |
-| `RESEND_FROM_EMAIL` | Optional | Sender address for invitation email. Defaults to `Planora <onboarding@resend.dev>`. | `Planora <hello@example.com>` |
-| `NEXT_PUBLIC_APP_URL` | Recommended for invitations | Base URL used to construct invitation links. | `http://localhost:3000` |
-| `APP_URL` | Fallback | Used only if `NEXT_PUBLIC_APP_URL` is not set. | `http://localhost:3000` |
-
-Example `.env.local`:
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Public anon key — safe in the browser only because of RLS. |
+| `RESEND_API_KEY` | For invitations | Server-only; never prefix with `NEXT_PUBLIC_`. |
+| `RESEND_FROM_EMAIL` | Optional | Defaults to `Planora <onboarding@resend.dev>`. |
+| `NEXT_PUBLIC_APP_URL` | Recommended | Base URL for invitation links. `APP_URL` is the fallback. |
 
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-public-anon-key
-
-# Required for sending workspace invitations
 RESEND_API_KEY=re_your_api_key
-
-# Optional while using Resend's default development sender
-RESEND_FROM_EMAIL=Planora <onboarding@resend.dev>
-
-# Required/recommended for correct invitation links
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-### Key handling rules
+Restart the dev server after changing env vars.
 
-- Never commit `.env.local` or any secret API key.
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` is designed to be public, but database safety depends on correct Supabase RLS policies; it is not a service-role key.
-- Never put a Supabase service-role key in a browser-exposed variable.
-- `RESEND_API_KEY` is server-only and must not be prefixed with `NEXT_PUBLIC_`.
-- Restart the Next.js server after changing environment variables.
+### 3. Set up Supabase
 
----
+1. Create a Supabase project and enable the email/password provider.
+2. In the SQL editor, apply the migrations in `supabase/migrations/` in filename order (`20260831_...` → latest). For a brand-new project, `SQL.txt` is the consolidated schema reference.
+3. Set the auth Site URL to `http://localhost:3000` for development; add your deployed URL later.
+4. Sign up through the app and verify the profile trigger, then create a workspace and verify the seeded roles, statuses, tags, and membership.
 
-## Supabase setup
+For production email, verify a sending domain in Resend and set `RESEND_FROM_EMAIL=Planora <invitations@your-domain.com>`.
 
-The repository contains ordered migrations in `supabase/migrations/` and a consolidated SQL reference in `SQL.txt`.
-
-### Recommended setup
-
-1. Create a Supabase project.
-2. Open the Supabase SQL Editor.
-3. Apply the SQL/schema in the intended order.
-4. Run the migrations in `supabase/migrations/` chronologically by filename, from `20260831_...` through the latest `20260907_...` migration.
-5. Confirm that the public tables, functions, triggers, views, and RLS policies were created.
-6. Create a test user through the Planora sign-up page.
-7. Confirm that a profile row is created by the `auth.users` trigger.
-8. Create a workspace and verify that default roles, workflow statuses, tags, membership, and activity are seeded.
-
-If your Supabase project is new, use the consolidated `SQL.txt` as the complete schema reference where appropriate. If the database already contains an earlier version of the schema, prefer applying the ordered migrations so the existing data can be upgraded safely. Review SQL changes before running them in a production database.
-
-### Authentication configuration
-
-In Supabase Authentication settings:
-
-- Enable the email/password provider.
-- Configure email confirmation according to the environment.
-- Set the local Site URL to `http://localhost:3000` during development.
-- Add the deployed application URL when deploying.
-- Ensure the confirmation flow returns users to an address served by the application.
-
-### Invitation email configuration
-
-The team invitation action creates a secure invitation record and builds a URL like:
-
-```text
-http://localhost:3000/accept-invitation?token=<invitation-token>
-```
-
-The recipient must authenticate with the same email address as the invitation before the database RPC accepts membership. Invitation records expire after seven days.
-
-For production email delivery, verify a sending domain in Resend and set, for example:
-
-```dotenv
-RESEND_FROM_EMAIL=Planora <invitations@your-domain.com>
-```
-
----
-
-## Running the application
-
-### Development
+### 4. Run
 
 ```bash
-npm run dev
-```
-
-Then visit:
-
-- `http://localhost:3000/landing` for the marketing page.
-- `http://localhost:3000/signup` to create an account.
-- `http://localhost:3000/signin` to sign in.
-- `http://localhost:3000/dev` to inspect the component gallery.
-
-After authentication, use `/workspaces` to select a workspace. The application will navigate to workspace-scoped pages such as `/overview?workspace=<id>`.
-
-### Production build
-
-```bash
-npm run build
-npm run start
-```
-
-`npm run start` serves the previously generated production build. Make sure production environment variables are available to the process before starting it.
-
-### Linting
-
-```bash
+npm run dev     # http://localhost:3000
+npm run build   # production build
+npm run start   # serve the build
 npm run lint
+npx tsc --noEmit   # type-check (no dedicated script)
 ```
 
-### Type checking
+## Notes
 
-There is currently no dedicated `typecheck` script in `package.json`. Run TypeScript directly without emitting files:
-
-```bash
-npx tsc --noEmit
-```
-
-There is no test script currently defined in `package.json`.
-
----
-
-## Useful scripts
-
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Starts the Next.js development server. |
-| `npm run build` | Creates a production build. |
-| `npm run start` | Serves the production build. |
-| `npm run lint` | Runs ESLint. |
-| `npx tsc --noEmit` | Type-checks the project without emitting files. |
-
----
-
-## Internationalization
-
-Planora currently supports:
-
-- English: `en` — default.
-- Italian: `it`.
-
-The locale is stored in the `planora-locale` cookie. `LocaleProvider`, `LanguageToggle`, and the server translation helpers provide translated interface text. Add new messages to the dictionaries in `lib/i18n.ts` and use the existing translation helpers instead of hard-coding user-facing copy in new product pages.
-
----
-
-## Design system and accessibility
-
-The design system is documented in `DESIGN.md` and implemented through Tailwind CSS v4 theme tokens in `app/globals.css`.
-
-Key principles include:
-
-- Light mode with white surfaces and a neutral page background.
-- Green reserved for primary, positive, active, and completed states.
-- Borders instead of static shadows.
-- Responsive layouts from a minimum viewport of 320px.
-- Visible keyboard focus using an accent outline.
-- Semantic labels and accessible names for controls.
-- Dialogs with explicit titles, descriptions, close actions, and confirmation for destructive operations.
-- Status communicated with text and values, not color alone.
-- Reduced-motion support through `prefers-reduced-motion`.
-
-Reusable primitives live in `components/ui/`, including cards, buttons, inputs, selects, textareas, badges, avatars, progress bars, modals, calendar, Gantt, Kanban, and heatmap components.
-
----
-
-## Screenshots
-
-Screenshots can be uploaded later and stored under `docs/screenshots/`. Suggested filenames:
-
-```text
-docs/screenshots/
-├── landing-page.png
-├── sign-in.png
-├── sign-up.png
-├── workspaces.png
-├── overview.png
-├── projects.png
-├── project-workspace.png
-├── project-task-list.png
-├── project-gantt.png
-├── project-calendar.png
-├── project-kanban.png
-├── team.png
-├── accept-invitation.png
-└── dev-components.png
-```
-
-Once an image is uploaded, replace or keep the corresponding placeholder with standard Markdown:
-
-```md
-![Overview dashboard](docs/screenshots/overview.png)
-```
-
-For a clickable full-size image:
-
-```md
-<a href="docs/screenshots/overview.png">
-  <img src="docs/screenshots/overview.png" alt="Planora overview dashboard" width="900">
-</a>
-```
-
----
-
-## Security notes
-
-- Authenticated layouts verify the Supabase user before rendering private pages.
-- Supabase session cookies are refreshed by `proxy.ts`.
-- Workspace and project lookups are scoped to the selected workspace and authenticated membership.
-- Database mutations use server actions and protected Supabase functions for sensitive operations.
-- Workspace and project deletion require exact-name confirmation.
-- Invitation tokens are stored and processed through the database invitation flow rather than trusting an email address alone.
-- RLS policies must remain enabled and should be tested whenever schema or access logic changes.
-- Do not expose service-role credentials in client code or `NEXT_PUBLIC_*` variables.
-
-Before production deployment, review all RLS policies, Supabase Auth redirect URLs, Resend domain configuration, error logging, rate limits, and the retention policy for account/workspace deletion.
-
----
-
-## Known limitations and next steps
-
-- There is no automated test suite or test script yet.
-- `npm run lint` is available, but CI should also run `npx tsc --noEmit` and `npm run build`.
-- The component gallery at `/dev` is publicly reachable unless deployment-level protection is added.
-- Workload percentages depend on configured task estimates and member capacity; incomplete capacity data results in zero or limited workload values.
-- The current invitation flow requires the recipient to sign in with the invited email address.
-- Screenshot assets are not included yet; add them under `docs/screenshots/` using the placeholders above.
-- Production deployments should define a real `NEXT_PUBLIC_APP_URL` and a verified Resend sender.
-
----
-
-## License
-
-No license file is currently included in the repository. Add a license before distributing the project publicly.
+- **i18n** — English (`en`, default) and Italian (`it`). Locale lives in the `planora-locale` cookie; add messages to `lib/i18n.ts` and use the translation helpers instead of hard-coding copy.
+- **Design** — see `DESIGN.md`. Light mode, borders over shadows, green reserved for primary/positive states, keyboard-visible focus, reduced-motion support. Primitives in `components/ui/`.
+- **Security** — RLS is enabled on all application tables; authorization is enforced both in server-side capability checks and database policies. Deletion flows require exact-name confirmation. Never expose service-role keys in client code.
+- **Limitations** — no test suite yet; `/dev` is publicly reachable; workload data depends on configured task estimates and member capacity; invitations require signing in with the invited email.
+- **License** — none yet; add one before distributing publicly.
